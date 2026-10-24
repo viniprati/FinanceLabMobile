@@ -54,12 +54,12 @@ if [[ -z "$signer_path" || ! -x "$signer_path" || ! -x "$aapt_path" ]]; then
 fi
 expected_signer="$(cat tool/demo_signing_sha256.txt)"
 actual_signer="$("$signer_path" verify --print-certs "$demo_apk_asset" |
-  sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n 1)"
+  sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | sed -n '1p')"
 if [[ "$actual_signer" != "$expected_signer" ]]; then
   echo "A assinatura mudou. Este APK não atualizará a demo já instalada." >&2
   exit 1
 fi
-apk_badging="$("$aapt_path" dump badging "$demo_apk_asset" | head -n 1)"
+apk_badging="$("$aapt_path" dump badging "$demo_apk_asset" | sed -n '1p')"
 if [[ "$apk_badging" != *"versionCode='$demo_build_number'"* ||
       "$apk_badging" != *"versionName='$demo_version_name'"* ]]; then
   echo "A versão embutida no APK não corresponde a pubspec.yaml." >&2
