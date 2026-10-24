@@ -20,8 +20,16 @@ projeto web; o aplicativo nunca se conecta diretamente ao MongoDB.
   projeção simples do mês. Área administrativa com indicadores agregados.
 
 O endereço da API ainda não está definido. Sem `API_BASE_URL`, o aplicativo
-inicia com a opção **Explorar demonstração**. Nenhum dado da demonstração é
-enviado ao servidor ou preservado depois de sair.
+oferece a opção **Explorar demonstração** e o login local abaixo:
+
+- E-mail: `demo@financelab.local`
+- Senha: `demo123`
+
+Essas credenciais são públicas e dão acesso apenas a dados fictícios no
+aparelho. São reconhecidas antes de qualquer chamada à API, inclusive em um
+APK que também tenha `API_BASE_URL`. O botão de demonstração continua
+disponível nos dois casos. Nenhum dado da demonstração é enviado ao servidor
+ou preservado depois de sair.
 
 ## Preparar e executar
 

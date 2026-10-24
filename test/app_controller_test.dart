@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:financelab_mobile/app_controller.dart';
 import 'package:financelab_mobile/data/api.dart';
 import 'package:financelab_mobile/data/draft_store.dart';
+import 'package:financelab_mobile/domain/demo_access.dart';
 import 'package:financelab_mobile/domain/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,19 +14,22 @@ class _FakeApi extends FinanceApi {
   final firstWriteStarted = Completer<void>();
   final releaseFirstWrite = Completer<void>();
   bool failNextWrite = false;
+  int loginCalls = 0;
   int failStatus = 500;
   FinanceData stored = const FinanceData();
 
   @override
-  Future<AppUser> login(String email, String password, bool legal) async =>
-      const AppUser(
-        id: 'test-user',
-        name: 'Pessoa Teste',
-        email: 'teste@example.test',
-        role: 'user',
-        plan: 'mensal',
-        status: 'active',
-      );
+  Future<AppUser> login(String email, String password, bool legal) async {
+    loginCalls++;
+    return const AppUser(
+      id: 'test-user',
+      name: 'Pessoa Teste',
+      email: 'teste@example.test',
+      role: 'user',
+      plan: 'mensal',
+      status: 'active',
+    );
+  }
 
   @override
   Future<FinanceData> loadData() async => stored;
@@ -74,6 +78,35 @@ void main() {
     expect(controller.data.transactions, isNotEmpty);
     expect(controller.summary.incomeCents, greaterThan(0));
     expect(controller.hasUnsavedChanges, isFalse);
+  });
+
+  test('credenciais públicas de demo não acessam a API', () async {
+    final api = _FakeApi();
+    final controller = AppController(api, draftStore: _MemoryDraftStore());
+    addTearDown(controller.dispose);
+
+    await controller.login(
+      DemoAccess.email.toUpperCase(),
+      DemoAccess.password,
+      false,
+    );
+
+    expect(controller.demo, isTrue);
+    expect(controller.user?.id, 'demo');
+    expect(controller.data.transactions, isNotEmpty);
+    expect(api.loginCalls, 0);
+    expect(api.writes, isEmpty);
+  });
+
+  test('sem API, credenciais comuns não entram na demonstração', () async {
+    final controller = AppController(null);
+    addTearDown(controller.dispose);
+
+    await controller.login(DemoAccess.email, 'senha-incorreta', false);
+
+    expect(controller.user, isNull);
+    expect(controller.demo, isFalse);
+    expect(controller.error, contains('URL HTTPS'));
   });
 
   test('serializa gravações e conserva a última edição', () async {

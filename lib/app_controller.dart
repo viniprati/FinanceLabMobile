@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import 'data/api.dart';
 import 'data/draft_store.dart';
+import 'domain/demo_access.dart';
 import 'domain/models.dart';
 import 'domain/summary.dart';
 
@@ -67,12 +68,16 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> login(String email, String password, bool acceptedLegal) async {
+    if (busy) return;
+    if (DemoAccess.matches(email, password)) {
+      enterDemo();
+      return;
+    }
     if (_api == null) {
       error = 'Configure uma URL HTTPS da API para entrar com sua conta.';
       notifyListeners();
       return;
     }
-    if (busy) return;
     busy = true;
     error = null;
     notifyListeners();

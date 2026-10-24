@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/demo_access.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({
     super.key,
@@ -39,7 +41,21 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> submit() async {
+    if (widget.loading) return;
     if (!(formKey.currentState?.validate() ?? false)) return;
+    if (DemoAccess.matches(email.text, password.text) &&
+        widget.onDemo != null) {
+      widget.onDemo!();
+      return;
+    }
+    if (widget.baseUri == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sem API, use as credenciais da demonstração.'),
+        ),
+      );
+      return;
+    }
     if (!accepted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Aceite os termos para continuar.')),
@@ -51,47 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.baseUri == null) {
-      return Scaffold(
-        body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.account_balance_wallet_rounded,
-                      size: 48,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Suas finanças, com clareza.',
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'A API ainda não foi configurada neste APK. '
-                      'Explore a interface com dados fictícios.',
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: widget.onDemo,
-                      child: const Text('Explorar demonstração'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
     final form = Form(
       key: formKey,
       child: Column(
@@ -109,10 +84,37 @@ class _LoginScreenState extends State<LoginScreen> {
                 ?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Acompanhe gastos, receitas, fundos e metas em um só lugar.',
+          Text(
+            widget.baseUri == null
+                ? 'A API ainda não foi configurada neste APK. '
+                      'Entre na demonstração local ou use o botão abaixo.'
+                : 'Acompanhe gastos, receitas, fundos e metas em um só lugar.',
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 16),
+          if (widget.onDemo != null)
+            Card(
+              color: Theme.of(context).colorScheme.secondaryContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Demonstração sem internet',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      'E-mail: ${DemoAccess.email}\n'
+                      'Senha: ${DemoAccess.password}',
+                    ),
+                    SizedBox(height: 4),
+                    Text('Dados fictícios salvos somente nesta sessão.'),
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: 16),
           if (widget.error != null)
             Container(
               width: double.infinity,
@@ -129,9 +131,11 @@ class _LoginScreenState extends State<LoginScreen> {
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.username, AutofillHints.email],
             textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'E-mail',
-              helperText: 'Digite o e-mail da sua conta.',
+              helperText: widget.baseUri == null
+                  ? 'Use o e-mail da demonstração acima.'
+                  : 'Digite o e-mail da sua conta.',
             ),
             validator: (v) => v == null || !v.contains('@')
                 ? 'Informe um e-mail válido.'
@@ -155,27 +159,29 @@ class _LoginScreenState extends State<LoginScreen> {
             validator: (v) =>
                 v == null || v.isEmpty ? 'Informe sua senha.' : null,
           ),
-          const SizedBox(height: 14),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            value: accepted,
-            onChanged: widget.loading
-                ? null
-                : (v) => setState(() => accepted = v ?? false),
-            title: Wrap(
-              children: [
-                const Text('Aceito os '),
-                _Link(label: 'Termos de Uso', onTap: widget.onTerms),
-                const Text(' e a '),
-                _Link(
-                  label: 'Política de Privacidade',
-                  onTap: widget.onPrivacy,
-                ),
-                const Text('.'),
-              ],
+          if (widget.baseUri != null) ...[
+            const SizedBox(height: 14),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: accepted,
+              onChanged: widget.loading
+                  ? null
+                  : (v) => setState(() => accepted = v ?? false),
+              title: Wrap(
+                children: [
+                  const Text('Aceito os '),
+                  _Link(label: 'Termos de Uso', onTap: widget.onTerms),
+                  const Text(' e a '),
+                  _Link(
+                    label: 'Política de Privacidade',
+                    onTap: widget.onPrivacy,
+                  ),
+                  const Text('.'),
+                ],
+              ),
+              controlAffinity: ListTileControlAffinity.leading,
             ),
-            controlAffinity: ListTileControlAffinity.leading,
-          ),
+          ],
           const SizedBox(height: 12),
           FilledButton(
             onPressed: widget.loading ? null : submit,
@@ -185,7 +191,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     height: 22,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Entrar'),
+                : Text(
+                    widget.baseUri == null
+                        ? 'Entrar na demonstração'
+                        : 'Entrar',
+                  ),
           ),
           if (widget.onDemo != null) ...[
             const SizedBox(height: 10),
