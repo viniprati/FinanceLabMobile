@@ -1,0 +1,111 @@
+# FinanceLab Mobile
+
+Interface Android em Flutter/Dart para o FinanceLab. Usa a API e o banco do
+projeto web; o aplicativo nunca se conecta diretamente ao MongoDB.
+
+## Estado atual
+
+- Interface Material 3 em português para visão geral, lançamentos, análise,
+  métricas, orçamentos, fundos e metas.
+- Login com a sessão `fp_session` da API existente. O token de sessão fica no
+  armazenamento seguro do aparelho.
+- Modo de demonstração com dados fictícios para revisar a interface sem API.
+- Exportação autenticada dos dados pessoais em JSON, cópia local financeira em
+  JSON, importação de JSON financeiro (inclusive do arquivo de portabilidade)
+  e solicitação de eliminação de dados pela API.
+- Rascunhos pendentes guardados no armazenamento seguro do aparelho, por conta.
+  Após reiniciar, o aplicativo recupera o rascunho e pede nova tentativa de
+  gravação. A interface oferece uma cópia local antes de descartá-lo.
+- Indicadores de consumo, aportes, orçamentos, patrimônio, histórico mensal e
+  projeção simples do mês. Área administrativa com indicadores agregados.
+
+O endereço da API ainda não está definido. Sem `API_BASE_URL`, o aplicativo
+inicia com a opção **Explorar demonstração**. Nenhum dado da demonstração é
+enviado ao servidor ou preservado depois de sair.
+
+## Preparar e executar
+
+Requer Flutter 3.47.7 (a mesma versão da integração contínua), Android SDK e
+um emulador ou aparelho Android. Na raiz deste repositório:
+
+```bash
+flutter pub get
+flutter doctor -v
+flutter devices
+flutter run
+```
+
+Quando a API estiver publicada em HTTPS e `/api/health` responder `200`, use:
+
+```bash
+flutter run --dart-define=API_BASE_URL=https://seu-dominio.example
+```
+
+`API_BASE_URL` é configuração pública do aplicativo, não um local para senhas
+ou chaves. O login usa `POST /api/auth/login`, recebe o cookie HTTP-only
+`fp_session` e usa `GET /api/auth/me` para restaurar a sessão. Os dados usam
+`GET/PUT /api/finance-data`. O backend precisa estar acessível pelo aparelho.
+
+## Verificar e gerar um APK de teste
+
+```bash
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+flutter test
+flutter build apk --debug
+```
+
+O APK de teste fica em `build/app/outputs/flutter-apk/app-debug.apk` e pode ser
+instalado com `adb install`. Para incluir a API no APK, passe
+`--dart-define=API_BASE_URL=https://seu-dominio.example` ao comando de build.
+
+## Assinatura e distribuição Android
+
+Uma build de release **nunca** usa a chave de depuração. Antes de executar
+`flutter build apk --release` ou `flutter build appbundle --release`, crie uma
+chave de produção fora do repositório e o arquivo local
+`android/key.properties` (ambos ignorados pelo Git):
+
+```properties
+# Caminho relativo a android/app, ou absoluto, para o seu arquivo de chave.
+storeFile=../../segredos/financelab-upload.jks
+storePassword=senha-do-cofre
+keyAlias=financelab-upload
+keyPassword=senha-da-chave
+```
+
+Guarde as senhas em um cofre de segredos; não as passe por `--dart-define`, não
+as registre em CI e não versione `key.properties` nem a chave. Sem as quatro
+propriedades e um `storeFile` legível, tarefas de release falham com uma
+mensagem explícita. Para publicar na Play Store, gere um AAB assinado:
+
+```bash
+flutter build appbundle --release \
+  --dart-define=API_BASE_URL=https://seu-dominio.example
+```
+
+O repositório inclui CI em GitHub Actions que executa análise, testes e uma
+build de depuração. A assinatura de produção permanece exclusivamente no
+ambiente de distribuição.
+
+## Organização
+
+- `lib/domain`: modelos, valores monetários em centavos e resumo financeiro.
+- `lib/data`: cliente HTTP, sessão e rascunhos em armazenamento seguro.
+- `lib/ui`: tema Material 3 e telas.
+- `lib/app_controller.dart`: estado da sessão e fila de gravações.
+- `.agents/skills`: skills Flutter selecionadas de
+  [Flutter-AI-Skills](https://github.com/viniprati/Flutter-AI-Skills).
+
+O documento financeiro inteiro é gravado pela API. As gravações do aplicativo
+são sequenciais. Antes de gravar, o app consulta o estado remoto e interrompe
+um PUT se detectar que outro acesso o alterou. O rascunho local continua
+disponível para exportação ou descarte explícito. Essa verificação não é
+atômica: para resolver disputas simultâneas com garantia, o backend precisa
+implementar revisão/ETag e gravação condicional. Ainda não há sincronização
+offline automática nem mesclagem de edições de dois aparelhos. Exportação em
+PDF/XLSX do site ainda não foi portada; o aplicativo oferece JSON compatível.
+
+O app não é uma entrega de produção enquanto não houver uma API pública HTTPS
+configurada e testada no aparelho: sem `API_BASE_URL`, ele funciona apenas no
+modo de demonstração.
