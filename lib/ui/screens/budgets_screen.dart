@@ -171,25 +171,47 @@ class _BudgetsState extends State<BudgetsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    b.category,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Editar',
-                  onPressed: () => _edit(b),
-                  icon: const Icon(Icons.edit_outlined),
-                ),
-                IconButton(
-                  tooltip: 'Remover',
-                  onPressed: () => _remove(b),
-                  icon: const Icon(Icons.delete_outline),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final actions = Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      tooltip: 'Editar',
+                      onPressed: () => _edit(b),
+                      icon: const Icon(Icons.edit_outlined),
+                    ),
+                    IconButton(
+                      tooltip: 'Remover',
+                      onPressed: () => _remove(b),
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                  ],
+                );
+                if (constraints.maxWidth < 360) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        b.category,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      actions,
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        b.category,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    actions,
+                  ],
+                );
+              },
             ),
             Text(
               '${Money.formatBr(spent)} usados de ${Money.formatBr(b.monthlyLimitCents)}',

@@ -136,7 +136,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           (effectiveCategory == 'all' || t.category == effectiveCategory);
     }).toList();
     return ListView(
-      padding: const EdgeInsets.all(16),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        16 + MediaQuery.viewInsetsOf(context).bottom,
+      ),
       children: [
         Card(
           child: Padding(
@@ -147,6 +153,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: kind,
                     decoration: const InputDecoration(labelText: 'Tipo'),
                     items: const [
@@ -285,26 +292,37 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             padding: EdgeInsets.all(24),
             child: Text('Nenhum lançamento neste período.'),
           ),
-        ...filtered.map(
-          (t) => Card(
-            child: ListTile(
-              title: Text(t.description),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${t.category} · ${t.date}'),
-                  Text(Money.formatBr(t.amountCents)),
-                ],
-              ),
-              trailing: IconButton(
-                tooltip: 'Remover',
-                onPressed: () => remove(t),
-                icon: const Icon(Icons.delete_outline),
-              ),
-            ),
-          ),
-        ),
+        ...filtered.map((t) => _transactionCard(t)),
       ],
     );
   }
+
+  Widget _transactionCard(Transaction transaction) => Card(
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  transaction.description,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Remover',
+                onPressed: () => remove(transaction),
+                icon: const Icon(Icons.delete_outline),
+              ),
+            ],
+          ),
+          Text('${transaction.category} · ${transaction.date}'),
+          Text(Money.formatBr(transaction.amountCents)),
+        ],
+      ),
+    ),
+  );
 }

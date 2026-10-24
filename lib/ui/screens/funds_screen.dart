@@ -130,7 +130,13 @@ class _FundsState extends State<FundsScreen> {
 
   @override
   Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(16),
+    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+    padding: EdgeInsets.fromLTRB(
+      16,
+      16,
+      16,
+      16 + MediaQuery.viewInsetsOf(context).bottom,
+    ),
     children: [
       Card(
         child: Padding(
@@ -206,33 +212,47 @@ class _FundsState extends State<FundsScreen> {
     final result = f.currentCents - f.investedCents;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        title: Text(f.name),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 8, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(child: Text(result >= 0 ? '+' : '−')),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    f.name,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Text(
               '${f.account.isEmpty ? f.category : f.account} · ${Money.formatBr(f.currentCents)}',
             ),
             Text('Resultado: ${Money.formatBr(result)}'),
+            OverflowBar(
+              alignment: MainAxisAlignment.end,
+              spacing: 4,
+              children: [
+                TextButton.icon(
+                  onPressed: () => _edit(f),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Editar'),
+                ),
+                TextButton.icon(
+                  onPressed: () => _remove(f),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Remover'),
+                ),
+              ],
+            ),
           ],
         ),
-        trailing: Wrap(
-          children: [
-            IconButton(
-              tooltip: 'Editar',
-              onPressed: () => _edit(f),
-              icon: const Icon(Icons.edit_outlined),
-            ),
-            IconButton(
-              tooltip: 'Remover',
-              onPressed: () => _remove(f),
-              icon: const Icon(Icons.delete_outline),
-            ),
-          ],
-        ),
-        isThreeLine: true,
-        leading: CircleAvatar(child: Text(result >= 0 ? '+' : '−')),
       ),
     );
   }

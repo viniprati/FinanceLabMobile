@@ -11,6 +11,7 @@ import 'ui/screens/goals_screen.dart';
 import 'ui/screens/metrics_screen.dart';
 import 'ui/screens/overview_screen.dart';
 import 'ui/screens/transactions_screen.dart';
+import 'ui/theme/app_theme.dart';
 
 enum AppSection {
   overview('Início', Icons.dashboard_outlined, Icons.dashboard),
@@ -99,6 +100,44 @@ class _HomeShellState extends State<HomeShell> {
     final body = isAdmin
         ? _AdminOverview(controller: controller)
         : _sectionBody(active);
+    final statusItems = <Widget>[
+      if (controller.demo)
+        const _StatusStrip(
+          icon: Icons.science_outlined,
+          text: 'Demonstração: dados fictícios, salvos só nesta sessão.',
+        )
+      else if (controller.saveError != null)
+        _StatusStrip(
+          icon: Icons.error_outline,
+          text: controller.draftCleanupFailed || controller.unreadableDraft
+              ? controller.saveError!
+              : 'Não foi possível salvar: ${controller.saveError}',
+          action: TextButton(
+            onPressed: controller.conflictDetected || controller.unreadableDraft
+                ? () => unawaited(_openDataPrivacy())
+                : controller.draftCleanupFailed
+                ? () => unawaited(controller.retryDraftCleanup())
+                : () => unawaited(
+                    controller.sessionExpired
+                        ? controller.reloginPreservingDraft()
+                        : controller.retrySave(),
+                  ),
+            child: Text(
+              controller.conflictDetected || controller.unreadableDraft
+                  ? 'Revisar dados'
+                  : controller.draftCleanupFailed
+                  ? 'Limpar cópia antiga'
+                  : controller.sessionExpired
+                  ? 'Entrar novamente'
+                  : 'Tentar novamente',
+            ),
+          ),
+        )
+      else if (controller.saving)
+        const _StatusStrip(icon: Icons.sync, text: 'Salvando alterações…'),
+      if (controller.error != null)
+        _StatusStrip(icon: Icons.info_outline, text: controller.error!),
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -168,76 +207,46 @@ class _HomeShellState extends State<HomeShell> {
       ),
       drawer: wide || isAdmin ? null : _mobileDrawer(),
       body: SafeArea(
-        child: Column(
-          children: [
-            if (controller.demo)
-              const _StatusStrip(
-                icon: Icons.science_outlined,
-                text: 'Demonstração: dados fictícios, salvos só nesta sessão.',
-              )
-            else if (controller.saveError != null)
-              _StatusStrip(
-                icon: Icons.error_outline,
-                text:
-                    controller.draftCleanupFailed || controller.unreadableDraft
-                    ? controller.saveError!
-                    : 'Não foi possível salvar: ${controller.saveError}',
-                action: TextButton(
-                  onPressed:
-                      controller.conflictDetected || controller.unreadableDraft
-                      ? () => unawaited(_openDataPrivacy())
-                      : controller.draftCleanupFailed
-                      ? () => unawaited(controller.retryDraftCleanup())
-                      : () => unawaited(
-                          controller.sessionExpired
-                              ? controller.reloginPreservingDraft()
-                              : controller.retrySave(),
-                        ),
-                  child: Text(
-                    controller.conflictDetected || controller.unreadableDraft
-                        ? 'Revisar dados'
-                        : controller.draftCleanupFailed
-                        ? 'Limpar cópia antiga'
-                        : controller.sessionExpired
-                        ? 'Entrar novamente'
-                        : 'Tentar novamente',
+        child: LayoutBuilder(
+          builder: (context, constraints) => Column(
+            children: [
+              if (statusItems.isNotEmpty)
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: constraints.maxHeight * 0.48,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(children: statusItems),
                   ),
                 ),
-              )
-            else if (controller.saving)
-              const _StatusStrip(
-                icon: Icons.sync,
-                text: 'Salvando alterações…',
-              ),
-            if (controller.error != null)
-              _StatusStrip(icon: Icons.info_outline, text: controller.error!),
-            Expanded(
-              child: wide && !isAdmin
-                  ? Row(
-                      children: [
-                        NavigationRail(
-                          extended: width >= 1200,
-                          scrollable: true,
-                          selectedIndex: AppSection.values.indexOf(active),
-                          onDestinationSelected: (index) => setState(
-                            () => section = AppSection.values[index],
+              Expanded(
+                child: wide && !isAdmin
+                    ? Row(
+                        children: [
+                          NavigationRail(
+                            extended: width >= 1200,
+                            scrollable: true,
+                            selectedIndex: AppSection.values.indexOf(active),
+                            onDestinationSelected: (index) => setState(
+                              () => section = AppSection.values[index],
+                            ),
+                            destinations: [
+                              for (final value in AppSection.values)
+                                NavigationRailDestination(
+                                  icon: Icon(value.icon),
+                                  selectedIcon: Icon(value.selectedIcon),
+                                  label: Text(value.title),
+                                ),
+                            ],
                           ),
-                          destinations: [
-                            for (final value in AppSection.values)
-                              NavigationRailDestination(
-                                icon: Icon(value.icon),
-                                selectedIcon: Icon(value.selectedIcon),
-                                label: Text(value.title),
-                              ),
-                          ],
-                        ),
-                        const VerticalDivider(width: 1),
-                        Expanded(child: body),
-                      ],
-                    )
-                  : body,
-            ),
-          ],
+                          const VerticalDivider(width: 1),
+                          Expanded(child: body),
+                        ],
+                      )
+                    : body,
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: !wide && !isAdmin
@@ -391,26 +400,37 @@ class _StatusStrip extends StatelessWidget {
   final Widget? action;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Theme.of(context).colorScheme.secondaryContainer,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 20),
-              const SizedBox(width: 8),
-              Expanded(child: Text(text)),
-            ],
-          ),
-          if (action != null)
-            Align(alignment: Alignment.centerRight, child: action),
-        ],
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.secondaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 20, color: scheme.onSecondaryContainer),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    text,
+                    style: TextStyle(color: scheme.onSecondaryContainer),
+                  ),
+                ),
+              ],
+            ),
+            if (action != null)
+              Align(alignment: Alignment.centerRight, child: action),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _MorePage extends StatelessWidget {

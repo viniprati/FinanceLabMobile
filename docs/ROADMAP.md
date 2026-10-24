@@ -26,6 +26,15 @@ O app já tinha Material 3, navegação que muda para barra lateral em telas lar
 - **Interface:** visão geral e análise receberam composição que cresce com o texto, espaçamentos compartilhados e leitura semântica dos indicadores principais. Há testes de widget para telas compactas e fonte ampliada.
 - **Ainda pendente:** medição em aparelho modesto, percurso manual com TalkBack, contraste completo, limites por volume e sincronização offline por operação. A API pública HTTPS também continua necessária para testar contas reais no celular.
 
+## Progresso da segunda rodada — responsividade
+
+- Login: campos inválidos recebem foco; termos e privacidade têm botões com alvo de pelo menos 48 dp. O formulário continua rolável com teclado aberto.
+- Lançamentos, fundos e orçamentos: ações e textos longos crescem ou passam para outra linha em espaço estreito. O seletor de tipo não estoura a largura com fonte a 200%.
+- Metas, métricas e navegação: ações continuam alcançáveis; os cards de patrimônio empilham em largura estreita e a navegação lateral permanece utilizável no tablet.
+- Estados de gravação: mensagens longas rolam dentro de uma área limitada, preservando espaço para o conteúdo e acesso à ação. Tema escuro recebeu os mesmos estilos de campo, card e botão do claro.
+- **Verificação automatizada:** testes de widget em 320×640 dp, texto a 200%, teclado simulado com 280 dp de altura e tablet de 900×700 dp; pares semânticos principais do tema claro e escuro medidos com contraste de pelo menos 4,5:1. Isso cobre os componentes e estados testados, não a tela inteira.
+- **Verificação pendente:** rotação, toque e TalkBack em Android físico ou emulador; não havia dispositivo Android disponível neste ambiente. A medição de desempenho e o contraste de todos os elementos de tela também continuam pendentes.
+
 ## Ordem de execução
 
 As fases 1 e 2 podem avançar em paralelo. A fase 4 depende do contrato de revisão da fase 1. Uma fase só termina quando seus critérios de aceite forem demonstrados, inclusive nos estados de erro.

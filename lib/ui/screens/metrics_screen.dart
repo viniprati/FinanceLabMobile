@@ -72,22 +72,32 @@ class MetricsScreen extends StatelessWidget {
         const SizedBox(height: 16),
         SectionCard(
           title: 'Resumo de patrimônio',
-          child: Row(
-            children: [
-              Expanded(
-                child: MetricCard(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final cards = [
+                MetricCard(
                   label: 'Atual',
                   value: Money.formatBr(summary.portfolioCents),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: MetricCard(
+                MetricCard(
                   label: 'Investido',
                   value: Money.formatBr(summary.investedCents),
                 ),
-              ),
-            ],
+              ];
+              if (constraints.maxWidth < 360) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [cards[0], const SizedBox(height: 12), cards[1]],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: cards[0]),
+                  const SizedBox(width: 12),
+                  Expanded(child: cards[1]),
+                ],
+              );
+            },
           ),
         ),
         const SizedBox(height: 16),

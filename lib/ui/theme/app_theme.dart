@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppSpacing {
+  static const xxs = 4.0;
   static const xs = 8.0;
   static const sm = 12.0;
   static const md = 16.0;
@@ -16,12 +17,26 @@ abstract final class AppTheme {
       seedColor: seed,
       brightness: Brightness.light,
     );
+    return _build(scheme);
+  }
+
+  static ThemeData dark() => _build(
+    ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark),
+  );
+
+  static ThemeData _build(ColorScheme scheme) {
+    final typography = Typography.material2021(
+      platform: TargetPlatform.android,
+    );
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: const Color(0xFFF5F8F7),
-      textTheme: Typography.material2021(platform: TargetPlatform.android)
-          .black,
+      scaffoldBackgroundColor: scheme.brightness == Brightness.light
+          ? const Color(0xFFF5F8F7)
+          : scheme.surface,
+      textTheme: scheme.brightness == Brightness.light
+          ? typography.black
+          : typography.white,
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surface,
@@ -51,12 +66,4 @@ abstract final class AppTheme {
       ),
     );
   }
-
-  static ThemeData dark() => ThemeData(
-    useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: seed,
-      brightness: Brightness.dark,
-    ),
-  );
 }
