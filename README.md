@@ -19,6 +19,10 @@ projeto web; o aplicativo nunca se conecta diretamente ao MongoDB.
 - Indicadores de consumo, aportes, orçamentos, patrimônio, histórico mensal e
   projeção simples do mês. Área administrativa com indicadores agregados.
 
+O [roteiro de evolução](docs/ROADMAP.md) organiza as próximas melhorias de
+integridade dos dados, acessibilidade, layout, desempenho e uso com rede
+instável, com critérios de aceite para cada fase.
+
 O endereço da API ainda não está definido. Sem `API_BASE_URL`, o aplicativo
 oferece a opção **Explorar demonstração** e o login local abaixo:
 
