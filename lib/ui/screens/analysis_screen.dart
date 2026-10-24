@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/models.dart';
 import '../../domain/money.dart';
 import '../../domain/summary.dart';
+import '../theme/app_theme.dart';
 import '../widgets/section_card.dart';
 
 class AnalysisScreen extends StatelessWidget {
@@ -15,7 +16,7 @@ class AnalysisScreen extends StatelessWidget {
       ..sort((a, b) => b.value.compareTo(a.value));
     final max = entries.isEmpty ? 1 : entries.first.value;
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         SectionCard(
           title: 'Despesas por categoria',
@@ -30,35 +31,49 @@ class AnalysisScreen extends StatelessWidget {
               : Column(
                   children: [
                     for (final e in entries)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 7),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 110,
-                              child: Text(
-                                e.key,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                      Semantics(
+                        container: true,
+                        label:
+                            '${e.key}: ${Money.formatBr(e.value)}. '
+                            '${((e.value / max) * 100).round()}% da maior categoria.',
+                        child: ExcludeSemantics(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.xs,
                             ),
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: LinearProgressIndicator(
-                                  value: e.value / max,
-                                  minHeight: 12,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: Text(e.key)),
+                                    const SizedBox(width: AppSpacing.sm),
+                                    Flexible(
+                                      child: Text(
+                                        Money.formatBr(e.value),
+                                        textAlign: TextAlign.end,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
+                                const SizedBox(height: AppSpacing.xs),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: LinearProgressIndicator(
+                                    value: e.value / max,
+                                    minHeight: 12,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(Money.formatBr(e.value)),
-                          ],
+                          ),
                         ),
                       ),
                   ],
                 ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.md),
         if (data.transactions.any((t) => t.subcategory.trim().isNotEmpty)) ...[
           SectionCard(
             title: 'Despesas por subcategoria',
@@ -67,14 +82,28 @@ class AnalysisScreen extends StatelessWidget {
                 for (final entry
                     in (summary.subcategoryCents.entries.toList()
                       ..sort((a, b) => b.value.compareTo(a.value))))
-                  ListTile(
-                    title: Text(entry.key),
-                    trailing: Text(Money.formatBr(entry.value)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: Text(entry.key)),
+                        const SizedBox(width: AppSpacing.sm),
+                        Flexible(
+                          child: Text(
+                            Money.formatBr(entry.value),
+                            textAlign: TextAlign.end,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.md),
         ],
         SectionCard(
           title: 'Histórico mensal',
@@ -84,37 +113,70 @@ class AnalysisScreen extends StatelessWidget {
               : Column(
                   children: [
                     for (final flow in summary.monthlyFlows.reversed.take(6))
-                      ListTile(
-                        title: Text(flow.month),
-                        subtitle: Text(
-                          'Receitas: ${Money.formatBr(flow.incomeCents)} · '
-                          'Saídas: ${Money.formatBr(flow.expensesCents)}',
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.xs,
                         ),
-                        trailing: Text(Money.formatBr(flow.balanceCents)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: Text(flow.month)),
+                                const SizedBox(width: AppSpacing.sm),
+                                Flexible(
+                                  child: Text(
+                                    Money.formatBr(flow.balanceCents),
+                                    textAlign: TextAlign.end,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              'Receitas: ${Money.formatBr(flow.incomeCents)} · '
+                              'Saídas: ${Money.formatBr(flow.expensesCents)}',
+                            ),
+                          ],
+                        ),
                       ),
                   ],
                 ),
         ),
         if (summary.budgetProgress.isNotEmpty) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.md),
           SectionCard(
             title: 'Uso dos orçamentos',
             child: Column(
               children: [
                 for (final budget in summary.budgetProgress)
-                  ListTile(
-                    title: Text(budget.category),
-                    subtitle: Text(
-                      '${Money.formatBr(budget.spentCents)} de '
-                      '${Money.formatBr(budget.limitCents)}',
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
                     ),
-                    trailing: Text('${(budget.usage * 100).round()}%'),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: Text(budget.category)),
+                            const SizedBox(width: AppSpacing.sm),
+                            Text('${(budget.usage * 100).round()}%'),
+                          ],
+                        ),
+                        Text(
+                          '${Money.formatBr(budget.spentCents)} de '
+                          '${Money.formatBr(budget.limitCents)}',
+                        ),
+                      ],
+                    ),
                   ),
               ],
             ),
           ),
         ],
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.md),
         SectionCard(
           title: 'Aportes',
           child: Text(

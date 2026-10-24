@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/models.dart';
 import '../../domain/money.dart';
 import '../../domain/summary.dart';
+import '../theme/app_theme.dart';
 import '../widgets/section_card.dart';
 
 class OverviewScreen extends StatelessWidget {
@@ -11,17 +12,11 @@ class OverviewScreen extends StatelessWidget {
   final FinanceSummary summary;
   @override
   Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(16),
+    padding: const EdgeInsets.all(AppSpacing.md),
     children: [
       LayoutBuilder(
-        builder: (context, c) => GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: c.maxWidth > 650 ? 3 : 1,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: c.maxWidth > 650 ? 1.9 : 2.0,
-          children: [
+        builder: (context, c) {
+          final cards = [
             MetricCard(
               label: 'Saldo do mês',
               value: Money.formatBr(summary.cashBalanceCents),
@@ -45,10 +40,30 @@ class OverviewScreen extends StatelessWidget {
               icon: Icons.trending_down,
               tone: Colors.deepOrange,
             ),
-          ],
-        ),
+          ];
+          if (c.maxWidth <= 650) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final card in cards) ...[
+                  card,
+                  if (card != cards.last) const SizedBox(height: AppSpacing.sm),
+                ],
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < cards.length; i++) ...[
+                Expanded(child: cards[i]),
+                if (i < cards.length - 1) const SizedBox(width: AppSpacing.sm),
+              ],
+            ],
+          );
+        },
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: AppSpacing.md),
       SectionCard(
         title: 'Patrimônio',
         subtitle: '${data.funds.length} fundo(s) monitorado(s)',
@@ -92,7 +107,7 @@ class OverviewScreen extends StatelessWidget {
           ],
         ),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: AppSpacing.md),
       SectionCard(
         title: 'Destino das saídas',
         child: Column(
@@ -109,7 +124,7 @@ class OverviewScreen extends StatelessWidget {
         ),
       ),
       if (summary.alerts.isNotEmpty) ...[
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.md),
         SectionCard(
           title: 'Pontos de atenção',
           child: Column(
@@ -123,7 +138,7 @@ class OverviewScreen extends StatelessWidget {
           ),
         ),
       ],
-      const SizedBox(height: 16),
+      const SizedBox(height: AppSpacing.md),
       SectionCard(
         title: 'Próximos passos',
         child: data.transactions.isEmpty

@@ -1,6 +1,6 @@
 # Roteiro de evolução do FinanceLab Mobile
 
-Atualizado em 24/10/2026. Este documento é um plano; as funcionalidades descritas nas etapas ainda não foram implementadas.
+Atualizado em 24/10/2026. Este é um plano vivo: as fases 1 e 2 começaram, e os itens restantes seguem como critérios para as próximas entregas.
 
 ## Objetivo e ponto de partida
 
@@ -8,9 +8,9 @@ Entregar um app Android em português que continue claro e seguro para pessoas c
 
 Nas telas, priorizar uma ação principal por tarefa, títulos que expliquem o dado, valores acompanhados de período e unidade, textos curtos em português comum e ajuda contextual para termos financeiros. Em ações que apagam ou substituem dados, mostrar a consequência e uma forma de voltar ou preservar uma cópia. O objetivo é reduzir esforço de leitura e erro para pessoas de diferentes idades e experiência digital.
 
-O app já tem Material 3, navegação que muda para barra lateral em telas largas, valores monetários em centavos, armazenamento seguro do rascunho e testes de domínio, controlador e widgets. Os pontos abaixo foram localizados no código, mas **a acessibilidade e o desempenho em aparelho ainda precisam ser medidos**:
+O app já tinha Material 3, navegação que muda para barra lateral em telas largas, valores monetários em centavos, armazenamento seguro do rascunho e testes de domínio, controlador e widgets. Os pontos abaixo formaram a linha de base antes da primeira rodada; **a acessibilidade e o desempenho em aparelho ainda precisam ser medidos**:
 
-| Área | Evidência atual | Risco ou oportunidade |
+| Área | Evidência inicial | Risco ou oportunidade |
 | --- | --- | --- |
 | Gravação | O controlador faz GET, compara uma impressão digital e depois envia o documento inteiro por PUT; o servidor aceita o PUT sem revisão. | Duas gravações próximas em aparelhos diferentes podem sobrescrever uma à outra. |
 | Importação | O modelo valida a forma do JSON, mas não rejeita IDs repetidos nas coleções. | Editar ou remover um item pode atingir o registro errado ou vários registros. |
@@ -18,6 +18,13 @@ O app já tem Material 3, navegação que muda para barra lateral em telas larga
 | Layout | Há AppSpacing no tema, mas as telas ainda usam muitos espaçamentos literais; a visão geral usa cards em grade com proporção fixa. | O ritmo visual varia e textos ampliados podem apertar os cards. |
 | Acessibilidade | Widgets Material e alguns botões já oferecem rótulos; não há testes dedicados de acessibilidade nem leitura das jornadas com TalkBack registrada. | Não há evidência de que métricas, barras, erros e navegação sejam compreensíveis para todos. |
 | Volume | Lançamentos filtrados são montados como todos os filhos de uma lista; o resumo é calculado ao acessar o controlador. | É preciso medir o efeito com contas grandes antes de otimizar. |
+
+## Progresso da primeira rodada
+
+- **Dados:** o backend passou a exigir revisão/ETag no PUT e a recusar gravações concorrentes; o site enfileira gravações por sessão e o app preserva o rascunho diante de conflito. Importações com IDs repetidos são recusadas.
+- **Recuperação:** rascunhos novos têm versão de esquema, datas, revisão-base e checksum. O app confere uma resposta perdida antes de repetir a gravação e exige decisão explícita para substituir uma versão remota. Um rascunho ilegível pode ser exportado ou descartado.
+- **Interface:** visão geral e análise receberam composição que cresce com o texto, espaçamentos compartilhados e leitura semântica dos indicadores principais. Há testes de widget para telas compactas e fonte ampliada.
+- **Ainda pendente:** medição em aparelho modesto, percurso manual com TalkBack, contraste completo, limites por volume e sincronização offline por operação. A API pública HTTPS também continua necessária para testar contas reais no celular.
 
 ## Ordem de execução
 

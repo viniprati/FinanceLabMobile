@@ -1,12 +1,13 @@
 name: financelab_mobile
 description: "Aplicativo Android do FinanceLab, em Flutter."
 publish_to: 'none'
-version: 0.1.0+2
+version: 0.1.0+3
 
 environment:
   sdk: ^3.13.5
 
 dependencies:
+  crypto: ^3.0.7
   file_picker: ^13.1.0
   flutter:
     sdk: flutter

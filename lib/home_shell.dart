@@ -49,29 +49,45 @@ class _HomeShellState extends State<HomeShell> {
   AppController get controller => widget.controller;
 
   Future<void> _logout() async {
-    if (controller.hasUnsavedChanges) {
+    final hasDraft = controller.hasUnsavedChanges || controller.unreadableDraft;
+    if (hasDraft) {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Sair com alterações pendentes?'),
-          content: const Text(
-            'As alterações ainda não foram confirmadas pelo servidor e podem se perder.',
+          title: Text(
+            controller.unreadableDraft
+                ? 'Sair com rascunho local?'
+                : 'Sair com alterações pendentes?',
+          ),
+          content: Text(
+            controller.unreadableDraft
+                ? 'O rascunho local não pôde ser lido. Sair agora o descartará. '
+                      'Você pode salvar uma cópia antes.'
+                : 'As alterações ainda não foram confirmadas pelo servidor. '
+                      'Sair agora as descartará.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Continuar no app'),
             ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+                unawaited(_openDataPrivacy());
+              },
+              child: const Text('Salvar cópia local'),
+            ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Sair'),
+              child: const Text('Sair e descartar'),
             ),
           ],
         ),
       );
       if (confirmed != true) return;
     }
-    await controller.logout();
+    await controller.logout(discardPendingDraft: hasDraft);
   }
 
   @override
@@ -162,15 +178,27 @@ class _HomeShellState extends State<HomeShell> {
             else if (controller.saveError != null)
               _StatusStrip(
                 icon: Icons.error_outline,
-                text: 'Não foi possível salvar: ${controller.saveError}',
+                text:
+                    controller.draftCleanupFailed || controller.unreadableDraft
+                    ? controller.saveError!
+                    : 'Não foi possível salvar: ${controller.saveError}',
                 action: TextButton(
-                  onPressed: () => unawaited(
-                    controller.sessionExpired
-                        ? controller.reloginPreservingDraft()
-                        : controller.retrySave(),
-                  ),
+                  onPressed:
+                      controller.conflictDetected || controller.unreadableDraft
+                      ? () => unawaited(_openDataPrivacy())
+                      : controller.draftCleanupFailed
+                      ? () => unawaited(controller.retryDraftCleanup())
+                      : () => unawaited(
+                          controller.sessionExpired
+                              ? controller.reloginPreservingDraft()
+                              : controller.retrySave(),
+                        ),
                   child: Text(
-                    controller.sessionExpired
+                    controller.conflictDetected || controller.unreadableDraft
+                        ? 'Revisar dados'
+                        : controller.draftCleanupFailed
+                        ? 'Limpar cópia antiga'
+                        : controller.sessionExpired
                         ? 'Entrar novamente'
                         : 'Tentar novamente',
                   ),
@@ -367,12 +395,18 @@ class _StatusStrip extends StatelessWidget {
     color: Theme.of(context).colorScheme.secondaryContainer,
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(icon, size: 20),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text)),
-          ?action,
+          Row(
+            children: [
+              Icon(icon, size: 20),
+              const SizedBox(width: 8),
+              Expanded(child: Text(text)),
+            ],
+          ),
+          if (action != null)
+            Align(alignment: Alignment.centerRight, child: action),
         ],
       ),
     ),

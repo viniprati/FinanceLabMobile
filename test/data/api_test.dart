@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:financelab_mobile/data/api.dart';
+import 'package:financelab_mobile/domain/models.dart';
 
 class Store implements SessionStore {
   String? value;
@@ -92,6 +93,7 @@ void main() {
           '"goals":{"monthlyBudget":0,"emergencyFund":0,'
           '"emergencySaved":0}}',
           200,
+          headers: {'etag': '"rev-1"'},
         ),
       ),
       sessionStore: Store()..value = 'session-1',
@@ -103,6 +105,72 @@ void main() {
           (error) => error.message,
           'message',
           contains('dados financeiros inválidos'),
+        ),
+      ),
+    );
+  });
+
+  test('leitura recebe ETag e gravação usa If-Match', () async {
+    final requests = <http.Request>[];
+    final api = FinanceApi(
+      Uri.parse('https://example.com'),
+      client: MockClient((request) async {
+        requests.add(request);
+        if (request.method == 'GET') {
+          return http.Response(
+            '{"transactions":[],"funds":[],"budgets":[],"goals":'
+            '{"monthlyBudget":0,"emergencyFund":0,"emergencySaved":0}}',
+            200,
+            headers: {'etag': '"rev-1"'},
+          );
+        }
+        return http.Response('{"ok":true}', 200, headers: {'etag': '"rev-2"'});
+      }),
+      sessionStore: Store()..value = 'session-1',
+    );
+
+    final loaded = await api.loadData();
+    expect(loaded.etag, '"rev-1"');
+    final savedEtag = await api.saveData(loaded.data, ifMatch: loaded.etag);
+    expect(savedEtag, '"rev-2"');
+    expect(requests.last.headers['if-match'], '"rev-1"');
+  });
+
+  test('revisão obsoleta retorna 412 sem perder a sessão', () async {
+    final store = Store()..value = 'session-1';
+    final api = FinanceApi(
+      Uri.parse('https://example.com'),
+      client: MockClient(
+        (_) async => http.Response('{"error":"Dados alterados."}', 412),
+      ),
+      sessionStore: store,
+    );
+    await expectLater(
+      api.saveData(const FinanceData(), ifMatch: '"rev-1"'),
+      throwsA(isA<ApiException>().having((e) => e.status, 'status', 412)),
+    );
+    expect(store.value, 'session-1');
+  });
+
+  test('API sem ETag é incompatível e não permite gravação insegura', () async {
+    final api = FinanceApi(
+      Uri.parse('https://example.com'),
+      client: MockClient(
+        (_) async => http.Response(
+          '{"transactions":[],"funds":[],"budgets":[],"goals":'
+          '{"monthlyBudget":0,"emergencyFund":0,"emergencySaved":0}}',
+          200,
+        ),
+      ),
+      sessionStore: Store()..value = 'session-1',
+    );
+    await expectLater(
+      api.loadData(),
+      throwsA(
+        isA<ApiException>().having(
+          (e) => e.message,
+          'message',
+          contains('precisa ser atualizada'),
         ),
       ),
     );

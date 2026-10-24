@@ -35,6 +35,13 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+class VersionedFinanceData {
+  final FinanceData data;
+  final String etag;
+
+  const VersionedFinanceData({required this.data, required this.etag});
+}
+
 abstract class SessionStore {
   Future<String?> read();
   Future<void> write(String value);
@@ -73,8 +80,9 @@ class FinanceApi {
     String method,
     String path, {
     Object? body,
+    Map<String, String> extraHeaders = const {},
   }) async {
-    final h = await _headers;
+    final h = {...await _headers, ...extraHeaders};
     final u = baseUri.resolve(path);
     late http.Response r;
     try {
@@ -158,11 +166,16 @@ class FinanceApi {
     }
   }
 
-  Future<FinanceData> loadData() async {
-    final response = await _request('GET', '/api/finance-data');
+  Future<VersionedFinanceData> loadData() async {
+    final response = await _send('GET', '/api/finance-data');
+    final etag = _requiredFinanceEtag(response);
     try {
-      if (response is! Map) throw const FormatException();
-      return FinanceData.fromJson(Map<String, dynamic>.from(response));
+      final body = jsonDecode(response.body);
+      if (body is! Map) throw const FormatException();
+      return VersionedFinanceData(
+        data: FinanceData.fromJson(Map<String, dynamic>.from(body)),
+        etag: etag,
+      );
     } on FormatException {
       throw ApiException(
         'A API enviou dados financeiros inválidos. Nada foi sobrescrito.',
@@ -174,8 +187,14 @@ class FinanceApi {
     }
   }
 
-  Future<void> saveData(FinanceData d) async {
-    await _request('PUT', '/api/finance-data', body: d.toJson());
+  Future<String> saveData(FinanceData d, {required String ifMatch}) async {
+    final response = await _send(
+      'PUT',
+      '/api/finance-data',
+      body: d.toJson(),
+      extraHeaders: {'If-Match': ifMatch},
+    );
+    return _requiredFinanceEtag(response);
   }
 
   Future<Map<String, dynamic>> exportPersonalData() async =>
@@ -192,6 +211,16 @@ class FinanceApi {
 
   Future<Map<String, dynamic>> loadAdminOverview() async =>
       Map<String, dynamic>.from(await _request('GET', '/api/admin/overview'));
+}
+
+String _requiredFinanceEtag(http.Response response) {
+  final etag = response.headers['etag'];
+  if (etag == null || !RegExp(r'^"rev-[1-9][0-9]*"$').hasMatch(etag)) {
+    throw ApiException(
+      'A API financeira precisa ser atualizada antes de salvar dados.',
+    );
+  }
+  return etag;
 }
 
 String? _sessionToken(String? header) {

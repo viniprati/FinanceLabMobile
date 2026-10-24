@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:financelab_mobile/domain/money.dart';
 import 'package:financelab_mobile/domain/models.dart';
@@ -31,6 +33,53 @@ void main() {
       FinanceData.fromJson(data.toJson()).transactions.single.amountCents,
       12345,
     );
+  });
+  test('rejects duplicate IDs within each collection', () {
+    final cases = <String, Map<String, dynamic>>{
+      'transactions': {
+        ..._validFinanceJson(),
+        'transactions': [
+          _validFinanceJson()['transactions'][0],
+          _validFinanceJson()['transactions'][0],
+        ],
+      },
+      'funds': {
+        ..._validFinanceJson(),
+        'funds': [
+          _validFinanceJson()['funds'][0],
+          _validFinanceJson()['funds'][0],
+        ],
+      },
+      'budgets': {
+        ..._validFinanceJson(),
+        'budgets': [
+          _validFinanceJson()['budgets'][0],
+          _validFinanceJson()['budgets'][0],
+        ],
+      },
+    };
+
+    for (final entry in cases.entries) {
+      expect(
+        () => FinanceData.fromJson(entry.value),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            contains('ID duplicado em ${entry.key}.id'),
+          ),
+        ),
+      );
+    }
+  });
+  test('accepts a valid import envelope with unique IDs', () {
+    final source = jsonEncode({'financeData': _validFinanceJson()});
+
+    final imported = FinanceData.fromImportJson(source);
+
+    expect(imported.transactions.single.id, 'transaction-1');
+    expect(imported.funds.single.id, 'fund-1');
+    expect(imported.budgets.single.id, 'budget-1');
   });
   test('rejects malformed amounts instead of replacing them with zero', () {
     const prefix =
@@ -81,3 +130,39 @@ void main() {
     expect(s.categoryCents['Casa'], 2500);
   });
 }
+
+Map<String, dynamic> _validFinanceJson() => {
+  'transactions': [
+    {
+      'id': 'transaction-1',
+      'type': 'expense',
+      'kind': 'expense',
+      'date': '2026-10-01',
+      'category': 'Casa',
+      'subcategory': '',
+      'description': 'Conta',
+      'amount': 10.0,
+    },
+  ],
+  'funds': [
+    {
+      'id': 'fund-1',
+      'name': 'Reserva',
+      'account': '',
+      'category': 'Reserva',
+      'benchmark': '',
+      'liquidity': 'D+0',
+      'invested': 10.0,
+      'current': 10.0,
+      'monthlyYield': 0.0,
+    },
+  ],
+  'budgets': [
+    {'id': 'budget-1', 'category': 'Casa', 'monthlyLimit': 100.0},
+  ],
+  'goals': {
+    'monthlyBudget': 100.0,
+    'emergencyFund': 1000.0,
+    'emergencySaved': 100.0,
+  },
+};

@@ -214,19 +214,27 @@ class FinanceData {
     this.budgets = const [],
     this.goals = const Goals(),
   });
-  factory FinanceData.fromJson(Map<String, dynamic> j) => FinanceData(
-    transactions: _list(j['transactions'], 'transactions')
+  factory FinanceData.fromJson(Map<String, dynamic> j) {
+    final transactions = _list(j['transactions'], 'transactions')
         .map((x) => Transaction.fromJson(_record(x, 'transactions')))
-        .toList(growable: false),
-    funds: _list(
+        .toList(growable: false);
+    final funds = _list(
       j['funds'],
       'funds',
-    ).map((x) => Fund.fromJson(_record(x, 'funds'))).toList(growable: false),
-    budgets: _list(j['budgets'], 'budgets')
+    ).map((x) => Fund.fromJson(_record(x, 'funds'))).toList(growable: false);
+    final budgets = _list(j['budgets'], 'budgets')
         .map((x) => Budget.fromJson(_record(x, 'budgets')))
-        .toList(growable: false),
-    goals: Goals.fromJson(_record(j['goals'], 'goals')),
-  );
+        .toList(growable: false);
+    _ensureUniqueIds(transactions.map((item) => item.id), 'transactions.id');
+    _ensureUniqueIds(funds.map((item) => item.id), 'funds.id');
+    _ensureUniqueIds(budgets.map((item) => item.id), 'budgets.id');
+    return FinanceData(
+      transactions: transactions,
+      funds: funds,
+      budgets: budgets,
+      goals: Goals.fromJson(_record(j['goals'], 'goals')),
+    );
+  }
 
   factory FinanceData.fromImportJson(String source) {
     try {
@@ -257,4 +265,13 @@ class FinanceData {
     budgets: budgets ?? this.budgets,
     goals: goals ?? this.goals,
   );
+}
+
+void _ensureUniqueIds(Iterable<String> ids, String field) {
+  final seen = <String>{};
+  for (final id in ids) {
+    if (!seen.add(id)) {
+      throw FormatException('ID duplicado em $field.');
+    }
+  }
 }
