@@ -3,6 +3,7 @@ name: Flutter checks
 on:
   push:
     branches: [main]
+    tags: ['v*-demo.*']
   pull_request:
     branches: [main]
 
@@ -19,7 +20,10 @@ jobs:
           flutter-version: '3.47.7'
           cache: true
       - run: flutter pub get
-      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: dart format --output=none --set-exit-if-changed lib test tool
+      - run: dart tool/check_version.dart
+        env:
+          RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
       - run: flutter analyze
       - run: flutter test
       - run: flutter build apk --debug

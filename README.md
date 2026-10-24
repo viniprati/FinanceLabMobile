@@ -67,6 +67,30 @@ O APK de teste fica em `build/app/outputs/flutter-apk/app-debug.apk` e pode ser
 instalado com `adb install`. Para incluir a API no APK, passe
 `--dart-define=API_BASE_URL=https://seu-dominio.example` ao comando de build.
 
+## Versionamento e versões demo
+
+O código usa Git na branch `main`. A versão do aplicativo fica em
+`pubspec.yaml`, no formato `MAJOR.MINOR.PATCH+BUILD`. O Flutter usa
+`MAJOR.MINOR.PATCH` como `versionName` do Android e `BUILD` como
+`versionCode`. A cada APK distribuído, aumente `BUILD`; não reutilize uma
+tag. A primeira demo foi `0.1.0+1` / `v0.1.0-demo.1`; a segunda usa
+`0.1.0+2` / `v0.1.0-demo.2`.
+
+Para publicar uma nova demo, faça commit do novo `version` na `main`, envie
+a branch e execute:
+
+```bash
+./tool/release_demo.sh
+```
+
+O script exige `main` limpa e sincronizada, roda análise/testes/build, confere
+`versionCode`, `versionName` e o certificado da demo anterior, cria a tag Git
+e publica o APK como prévia no GitHub. Requer Flutter, Android SDK e `gh`
+autenticado. As demos precisam ser compiladas neste ambiente com a mesma
+chave de depuração local para permitir atualização sobre a instalação anterior.
+O CI também verifica a relação entre `pubspec.yaml` e tags demo. Para um
+lançamento de produção, use assinatura própria e uma tag `vMAJOR.MINOR.PATCH`.
+
 ## Assinatura e distribuição Android
 
 Uma build de release **nunca** usa a chave de depuração. Antes de executar
