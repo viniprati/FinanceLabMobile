@@ -25,10 +25,7 @@ void main() {
     await tester.tap(find.text('Entrar na demonstração'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('Demonstração: dados fictícios, salvos só nesta sessão.'),
-      findsOneWidget,
-    );
+    expect(find.text('Demonstração local • dados fictícios'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -47,16 +44,14 @@ void main() {
     await tester.tap(find.text('Explorar demonstração'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(
-      find.text('Demonstração: dados fictícios, salvos só nesta sessão.'),
-      findsOneWidget,
-    );
+    expect(find.text('Demonstração local • dados fictícios'), findsOneWidget);
     expect(find.text('Saldo do mês'), findsOneWidget);
 
     await tester.tap(find.text('Lançamentos').last);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(find.text('Adicionar'), findsOneWidget);
+    expect(find.text('Novo lançamento'), findsOneWidget);
+    expect(find.text('Buscar'), findsOneWidget);
 
     await tester.tap(find.text('Mais').last);
     await tester.pumpAndSettle();

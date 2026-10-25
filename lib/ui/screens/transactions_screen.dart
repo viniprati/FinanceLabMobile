@@ -12,11 +12,13 @@ class TransactionsScreen extends StatefulWidget {
     this.summary,
     required this.onDataChanged,
     this.monthKey,
+    this.editingBlocked = false,
   });
   final FinanceData data;
   final FinanceSummary? summary;
   final ValueChanged<FinanceData> onDataChanged;
   final String? monthKey;
+  final bool editingBlocked;
   @override
   State<TransactionsScreen> createState() => _TransactionsScreenState();
 }
@@ -32,6 +34,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   final search = TextEditingController();
   String filterKind = 'all';
   String filterCategory = 'all';
+  bool showForm = false;
   @override
   void dispose() {
     category.dispose();
@@ -48,6 +51,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   void add() {
+    if (widget.editingBlocked) return;
     if (!(keyForm.currentState?.validate() ?? false)) return;
     final t = Transaction(
       id: const Uuid().v4(),
@@ -68,9 +72,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     description.clear();
     subcategory.clear();
     amount.clear();
+    setState(() => showForm = false);
   }
 
   Future<void> remove(Transaction t) async {
+    if (widget.editingBlocked) return;
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
@@ -88,7 +94,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ],
       ),
     );
-    if (ok == true) {
+    if (ok == true && !widget.editingBlocked) {
       widget.onDataChanged(
         widget.data.copyWith(
           transactions: widget.data.transactions
@@ -144,87 +150,19 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         16 + MediaQuery.viewInsetsOf(context).bottom,
       ),
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: keyForm,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    initialValue: kind,
-                    decoration: const InputDecoration(labelText: 'Tipo'),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'expense',
-                        child: Text('Despesa'),
-                      ),
-                      DropdownMenuItem(value: 'income', child: Text('Receita')),
-                      DropdownMenuItem(
-                        value: 'contribution',
-                        child: Text('Aporte'),
-                      ),
-                    ],
-                    onChanged: (v) => setState(() => kind = v ?? 'expense'),
-                  ),
-                  TextFormField(
-                    controller: category,
-                    decoration: const InputDecoration(labelText: 'Categoria'),
-                    validator: (v) => v == null || v.trim().isEmpty
-                        ? 'Informe a categoria'
-                        : null,
-                  ),
-                  TextFormField(
-                    controller: subcategory,
-                    decoration: const InputDecoration(
-                      labelText: 'Subcategoria (opcional)',
-                    ),
-                  ),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Data'),
-                    subtitle: Text(
-                      '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
-                    ),
-                    trailing: const Icon(Icons.calendar_today_outlined),
-                    onTap: () async {
-                      final selected = await showDatePicker(
-                        context: context,
-                        initialDate: date,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (selected != null) setState(() => date = selected);
-                    },
-                  ),
-                  TextFormField(
-                    controller: description,
-                    decoration: const InputDecoration(labelText: 'Descrição'),
-                  ),
-                  TextFormField(
-                    controller: amount,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: const InputDecoration(labelText: 'Valor (R\$)'),
-                    validator: (v) => cents(v ?? '') == null
-                        ? 'Informe um valor válido'
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: add,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Adicionar'),
-                  ),
-                ],
-              ),
-            ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton.icon(
+            onPressed: widget.editingBlocked
+                ? null
+                : () => setState(() => showForm = !showForm),
+            icon: Icon(showForm ? Icons.close : Icons.add),
+            label: Text(showForm ? 'Fechar' : 'Novo lançamento'),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        if (showForm) _formCard(),
+        if (showForm) const SizedBox(height: 16),
         TextField(
           controller: search,
           onChanged: (_) => setState(() {}),
@@ -287,6 +225,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 8),
         if (filtered.isEmpty)
           const Padding(
             padding: EdgeInsets.all(24),
@@ -296,6 +235,79 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       ],
     );
   }
+
+  Widget _formCard() => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: keyForm,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DropdownButtonFormField<String>(
+              isExpanded: true,
+              initialValue: kind,
+              decoration: const InputDecoration(labelText: 'Tipo'),
+              items: const [
+                DropdownMenuItem(value: 'expense', child: Text('Despesa')),
+                DropdownMenuItem(value: 'income', child: Text('Receita')),
+                DropdownMenuItem(value: 'contribution', child: Text('Aporte')),
+              ],
+              onChanged: (v) => setState(() => kind = v ?? 'expense'),
+            ),
+            TextFormField(
+              controller: category,
+              decoration: const InputDecoration(labelText: 'Categoria'),
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? 'Informe a categoria' : null,
+            ),
+            TextFormField(
+              controller: subcategory,
+              decoration: const InputDecoration(
+                labelText: 'Subcategoria (opcional)',
+              ),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Data'),
+              subtitle: Text(
+                '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}',
+              ),
+              trailing: const Icon(Icons.calendar_today_outlined),
+              onTap: () async {
+                final selected = await showDatePicker(
+                  context: context,
+                  initialDate: date,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (selected != null) setState(() => date = selected);
+              },
+            ),
+            TextFormField(
+              controller: description,
+              decoration: const InputDecoration(labelText: 'Descrição'),
+            ),
+            TextFormField(
+              controller: amount,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(labelText: 'Valor (R\$)'),
+              validator: (v) =>
+                  cents(v ?? '') == null ? 'Informe um valor válido' : null,
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: widget.editingBlocked ? null : add,
+              icon: const Icon(Icons.add),
+              label: const Text('Adicionar'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 
   Widget _transactionCard(Transaction transaction) => Card(
     child: Padding(
@@ -314,7 +326,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               ),
               IconButton(
                 tooltip: 'Remover',
-                onPressed: () => remove(transaction),
+                onPressed: widget.editingBlocked
+                    ? null
+                    : () => remove(transaction),
                 icon: const Icon(Icons.delete_outline),
               ),
             ],

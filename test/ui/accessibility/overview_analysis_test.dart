@@ -102,7 +102,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Moradia', skipOffstage: false), findsOneWidget);
-    expect(find.text(r'R$ 1.200,00', skipOffstage: false), findsOneWidget);
+    expect(
+      find.textContaining(r'R$ 1.200,00', skipOffstage: false),
+      findsOneWidget,
+    );
     expect(find.text('Alimentação', skipOffstage: false), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

@@ -104,7 +104,8 @@ class _HomeShellState extends State<HomeShell> {
       if (controller.demo)
         const _StatusStrip(
           icon: Icons.science_outlined,
-          text: 'Demonstração: dados fictícios, salvos só nesta sessão.',
+          text: 'Demonstração local • dados fictícios',
+          semanticsText: 'Demonstração local: dados fictícios, salvos somente nesta sessão e não enviados ao servidor.',
         )
       else if (controller.saveError != null)
         _StatusStrip(
@@ -328,6 +329,7 @@ class _HomeShellState extends State<HomeShell> {
         data: data,
         summary: summary,
         monthKey: controller.selectedMonth,
+        editingBlocked: controller.unreadableDraft,
         onDataChanged: controller.updateData,
       ),
       AppSection.analysis => AnalysisScreen(data: data, summary: summary),
@@ -394,39 +396,56 @@ String monthLabel(String key) {
 }
 
 class _StatusStrip extends StatelessWidget {
-  const _StatusStrip({required this.icon, required this.text, this.action});
+  const _StatusStrip({
+    required this.icon,
+    required this.text,
+    this.semanticsText,
+    this.action,
+  });
   final IconData icon;
   final String text;
+  final String? semanticsText;
   final Widget? action;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: scheme.secondaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.xs,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 20, color: scheme.onSecondaryContainer),
-                const SizedBox(width: AppSpacing.xs),
-                Expanded(
-                  child: Text(
-                    text,
-                    style: TextStyle(color: scheme.onSecondaryContainer),
+    return Semantics(
+      container: true,
+      liveRegion: action == null,
+      label: semanticsText ?? text,
+      child: Material(
+        color: scheme.secondaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.xs,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 20, color: scheme.onSecondaryContainer),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: ExcludeSemantics(
+                      child: Text(
+                        text,
+                        maxLines: semanticsText == null ? null : 2,
+                        overflow: semanticsText == null
+                            ? null
+                            : TextOverflow.ellipsis,
+                        style: TextStyle(color: scheme.onSecondaryContainer),
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            if (action != null)
-              Align(alignment: Alignment.centerRight, child: action),
-          ],
+                ],
+              ),
+              if (action != null)
+                Align(alignment: Alignment.centerRight, child: action),
+            ],
+          ),
         ),
       ),
     );

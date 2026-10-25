@@ -5,6 +5,7 @@ import '../../domain/money.dart';
 import '../../domain/summary.dart';
 import '../theme/app_theme.dart';
 import '../widgets/section_card.dart';
+import '../widgets/finance_charts.dart';
 
 class OverviewScreen extends StatelessWidget {
   const OverviewScreen({super.key, required this.data, required this.summary});
@@ -16,6 +17,14 @@ class OverviewScreen extends StatelessWidget {
     children: [
       LayoutBuilder(
         builder: (context, c) {
+          final chart = SectionCard(
+            title: 'Últimos meses',
+            subtitle: 'Receitas e saídas registradas',
+            child: MonthlyChart(
+              flows: summary.monthlyFlows,
+              showLatestBalance: true,
+            ),
+          );
           final cards = [
             MetricCard(
               label: 'Saldo do mês',
@@ -45,20 +54,30 @@ class OverviewScreen extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (final card in cards) ...[
-                  card,
-                  if (card != cards.last) const SizedBox(height: AppSpacing.sm),
-                ],
+                cards[0],
+                const SizedBox(height: AppSpacing.sm),
+                chart,
+                const SizedBox(height: AppSpacing.sm),
+                cards[1],
+                const SizedBox(height: AppSpacing.sm),
+                cards[2],
               ],
             );
           }
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          return Column(
             children: [
-              for (var i = 0; i < cards.length; i++) ...[
-                Expanded(child: cards[i]),
-                if (i < cards.length - 1) const SizedBox(width: AppSpacing.sm),
-              ],
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var i = 0; i < cards.length; i++) ...[
+                    Expanded(child: cards[i]),
+                    if (i < cards.length - 1)
+                      const SizedBox(width: AppSpacing.sm),
+                  ],
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              chart,
             ],
           );
         },

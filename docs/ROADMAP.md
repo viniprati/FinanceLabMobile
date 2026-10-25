@@ -35,6 +35,17 @@ O app já tinha Material 3, navegação que muda para barra lateral em telas lar
 - **Verificação automatizada:** testes de widget em 320×640 dp, texto a 200%, teclado simulado com 280 dp de altura e tablet de 900×700 dp; pares semânticos principais do tema claro e escuro medidos com contraste de pelo menos 4,5:1. Isso cobre os componentes e estados testados, não a tela inteira.
 - **Verificação pendente:** rotação, toque e TalkBack em Android físico ou emulador; não havia dispositivo Android disponível neste ambiente. A medição de desempenho e o contraste de todos os elementos de tela também continuam pendentes.
 
+## Achados nas capturas do aplicativo em uso
+
+As capturas enviadas em 24/10/2026 mostram duas barreiras que os testes de overflow não detectaram: em **Lançamentos**, o formulário ocupa quase toda a primeira tela e empurra busca/lista para baixo; em **Análise**, histórico e orçamentos aparecem como texto e números sem uma visualização gráfica clara. O aviso da demonstração também toma espaço considerável no topo. Esta rodada trata a hierarquia visual e o acesso às tarefas, além de evitar estouro de layout. Modelo do aparelho, escala configurada e comportamento com TalkBack não foram medidos pelas capturas.
+
+## Progresso da terceira rodada — gráficos e hierarquia
+
+- Visão geral e análise mostram barras mensais para receitas e saídas; a análise inclui gráfico de despesas de consumo por categoria e barras de uso dos orçamentos. Cores vêm do tema claro/escuro, e legendas, valores e texto semântico acompanham as formas.
+- Categorias além das cinco maiores entram em “Outras categorias” sem alterar o total; a lista completa pode ser aberta na análise. Os rótulos dos meses ficam alinhados às barras.
+- Em Lançamentos, busca, filtros e lista aparecem antes do formulário. “Novo lançamento” abre o formulário, que conserva os campos se for recolhido. O aviso da demo foi abreviado na tela e mantém a explicação completa para leitor de tela.
+- Testes de widget cobrem gráficos e valores, agregação de categorias, largura de 320 dp, texto a 200%, formulário recolhido e navegação. Ainda é preciso conferir a composição final e o TalkBack no aparelho do usuário.
+
 ## Ordem de execução
 
 As fases 1 e 2 podem avançar em paralelo. A fase 4 depende do contrato de revisão da fase 1. Uma fase só termina quando seus critérios de aceite forem demonstrados, inclusive nos estados de erro.

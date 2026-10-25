@@ -46,7 +46,7 @@ void main() {
       ),
     );
     expect(find.text('Moradia'), findsOneWidget);
-    expect(find.text('R\$ 1.250,00'), findsOneWidget);
+    expect(find.text('R\$ 1.250,00 · 100%'), findsOneWidget);
     expect(find.text('Sem despesas no período'), findsNothing);
   });
 }

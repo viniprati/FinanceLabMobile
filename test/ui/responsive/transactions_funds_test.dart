@@ -51,6 +51,11 @@ void main() {
       ),
     );
     await tester.pump();
+    expect(find.text('Novo lançamento'), findsOneWidget);
+    expect(find.text('Adicionar'), findsNothing);
+    await tester.tap(find.text('Novo lançamento'));
+    await tester.pumpAndSettle();
+    expect(find.text('Adicionar'), findsOneWidget);
     expect(find.byType(DropdownButtonFormField<String>), findsWidgets);
     await tester.drag(find.byType(ListView), const Offset(0, -1200));
     await tester.pump();

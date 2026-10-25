@@ -5,6 +5,7 @@ import '../../domain/money.dart';
 import '../../domain/summary.dart';
 import '../theme/app_theme.dart';
 import '../widgets/section_card.dart';
+import '../widgets/finance_charts.dart';
 
 class AnalysisScreen extends StatelessWidget {
   const AnalysisScreen({super.key, required this.data, required this.summary});
@@ -14,12 +15,11 @@ class AnalysisScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final entries = summary.categoryCents.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final max = entries.isEmpty ? 1 : entries.first.value;
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         SectionCard(
-          title: 'Despesas por categoria',
+          title: 'Gráfico de despesas de consumo',
           subtitle: entries.isEmpty
               ? 'Sem despesas no período'
               : '${entries.length} categoria(s)',
@@ -30,45 +30,32 @@ class AnalysisScreen extends StatelessWidget {
                 )
               : Column(
                   children: [
-                    for (final e in entries)
-                      Semantics(
-                        container: true,
-                        label:
-                            '${e.key}: ${Money.formatBr(e.value)}. '
-                            '${((e.value / max) * 100).round()}% da maior categoria.',
-                        child: ExcludeSemantics(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: AppSpacing.xs,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(child: Text(e.key)),
-                                    const SizedBox(width: AppSpacing.sm),
-                                    Flexible(
-                                      child: Text(
-                                        Money.formatBr(e.value),
-                                        textAlign: TextAlign.end,
-                                      ),
+                    CategoryChart(entries: entries),
+                    if (entries.length > 6)
+                      ExpansionTile(
+                        tilePadding: EdgeInsets.zero,
+                        title: const Text('Ver todas as categorias'),
+                        children: [
+                          for (final entry in entries)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.xs,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(child: Text(entry.key)),
+                                  const SizedBox(width: AppSpacing.sm),
+                                  Flexible(
+                                    child: Text(
+                                      Money.formatBr(entry.value),
+                                      textAlign: TextAlign.end,
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: AppSpacing.xs),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: LinearProgressIndicator(
-                                    value: e.value / max,
-                                    minHeight: 12,
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
+                        ],
                       ),
                   ],
                 ),
@@ -112,6 +99,8 @@ class AnalysisScreen extends StatelessWidget {
               ? const EmptyState(message: 'Ainda não há histórico mensal.')
               : Column(
                   children: [
+                    MonthlyChart(flows: summary.monthlyFlows),
+                    const SizedBox(height: AppSpacing.md),
                     for (final flow in summary.monthlyFlows.reversed.take(6))
                       Padding(
                         padding: const EdgeInsets.symmetric(
@@ -168,6 +157,19 @@ class AnalysisScreen extends StatelessWidget {
                         Text(
                           '${Money.formatBr(budget.spentCents)} de '
                           '${Money.formatBr(budget.limitCents)}',
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        ExcludeSemantics(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(AppSpacing.xs),
+                            child: LinearProgressIndicator(
+                              value: budget.usage.clamp(0, 1).toDouble(),
+                              minHeight: AppSpacing.sm,
+                              color: budget.usage >= 1
+                                  ? Theme.of(context).colorScheme.error
+                                  : Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
                         ),
                       ],
                     ),

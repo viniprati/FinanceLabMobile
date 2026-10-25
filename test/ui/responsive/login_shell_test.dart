@@ -111,7 +111,8 @@ void main() {
     expect(transactionsTab, findsOneWidget);
     await tester.tap(transactionsTab);
     await tester.pumpAndSettle();
-    expect(find.text('Adicionar'), findsOneWidget);
+    expect(find.text('Novo lançamento'), findsOneWidget);
+    expect(find.text('Buscar'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
