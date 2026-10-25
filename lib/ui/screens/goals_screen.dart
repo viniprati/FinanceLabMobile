@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/models.dart';
 import '../../domain/money.dart';
 import '../../domain/summary.dart';
+import '../theme/app_theme.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({
@@ -21,6 +22,9 @@ class GoalsScreen extends StatefulWidget {
 class _GoalsState extends State<GoalsScreen> {
   final _key = GlobalKey<FormState>();
   late final TextEditingController _budget, _target, _saved;
+  final _budgetFocus = FocusNode();
+  final _targetFocus = FocusNode();
+  final _savedFocus = FocusNode();
   @override
   void initState() {
     super.initState();
@@ -50,6 +54,9 @@ class _GoalsState extends State<GoalsScreen> {
     _budget.dispose();
     _target.dispose();
     _saved.dispose();
+    _budgetFocus.dispose();
+    _targetFocus.dispose();
+    _savedFocus.dispose();
     super.dispose();
   }
 
@@ -59,7 +66,23 @@ class _GoalsState extends State<GoalsScreen> {
   }
 
   void _save() {
-    if (!(_key.currentState?.validate() ?? false)) return;
+    if (!(_key.currentState?.validate() ?? false)) {
+      final target = _amount(_budget.text) == null
+          ? _budgetFocus
+          : _amount(_target.text) == null
+          ? _targetFocus
+          : _savedFocus;
+      target.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || target.context == null) return;
+        Scrollable.ensureVisible(
+          target.context!,
+          alignment: .2,
+          duration: const Duration(milliseconds: 200),
+        );
+      });
+      return;
+    }
     final target = _amount(_target.text)!;
     final saved = _amount(_saved.text)!;
     widget.onDataChanged(
@@ -85,57 +108,108 @@ class _GoalsState extends State<GoalsScreen> {
     final emergencyProgress = g.emergencyFundCents == 0
         ? 0.0
         : (g.emergencySavedCents / g.emergencyFundCents).clamp(0.0, 1.0);
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _key,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Metas financeiras',
-                    style: Theme.of(context).textTheme.titleMedium,
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.all(AppSpacing.md),
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Form(
+                  key: _key,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Metas financeiras',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      _field(
+                        _budget,
+                        'Orçamento mensal',
+                        _budgetFocus,
+                        TextInputAction.next,
+                        () => _targetFocus.requestFocus(),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      _field(
+                        _target,
+                        'Meta da reserva',
+                        _targetFocus,
+                        TextInputAction.next,
+                        () => _savedFocus.requestFocus(),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      _field(
+                        _saved,
+                        'Valor guardado',
+                        _savedFocus,
+                        TextInputAction.done,
+                        _save,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      FilledButton(
+                        onPressed: _save,
+                        child: const Text('Salvar metas'),
+                      ),
+                    ],
                   ),
-                  _field(_budget, 'Orçamento mensal'),
-                  _field(_target, 'Meta da reserva'),
-                  _field(_saved, 'Valor guardado'),
-                  const SizedBox(height: 8),
-                  FilledButton(
-                    onPressed: _save,
-                    child: const Text('Salvar metas'),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 12),
+            _progress(
+              context,
+              'Orçamento mensal',
+              budgetProgress,
+              '${Money.formatBr(widget.summary?.expensesCents ?? 0)} usados de ${Money.formatBr(g.monthlyBudgetCents)}',
+            ),
+            _progress(
+              context,
+              'Reserva de emergência',
+              emergencyProgress,
+              '${Money.formatBr(g.emergencySavedCents)} guardados de ${Money.formatBr(g.emergencyFundCents)}',
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
-        _progress(
-          context,
-          'Orçamento mensal',
-          budgetProgress,
-          '${Money.formatBr(widget.summary?.expensesCents ?? 0)} usados de ${Money.formatBr(g.monthlyBudgetCents)}',
-        ),
-        _progress(
-          context,
-          'Reserva de emergência',
-          emergencyProgress,
-          '${Money.formatBr(g.emergencySavedCents)} guardados de ${Money.formatBr(g.emergencyFundCents)}',
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _field(TextEditingController c, String label) => TextFormField(
-    controller: c,
-    decoration: InputDecoration(labelText: '$label (R\$)'),
-    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-    validator: (v) =>
-        _amount(v ?? '') == null ? 'Informe um valor válido' : null,
+  Widget _field(
+    TextEditingController c,
+    String label,
+    FocusNode focus,
+    TextInputAction action,
+    VoidCallback submit,
+  ) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text(
+        '$label (R\$)',
+        style: Theme.of(context).textTheme.bodyMedium
+            ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      Semantics(
+        label: '$label em reais',
+        child: TextFormField(
+          controller: c,
+          focusNode: focus,
+          textInputAction: action,
+          onFieldSubmitted: (_) => submit(),
+          decoration: const InputDecoration(hintText: 'R\$ 0,00'),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          validator: (v) =>
+              _amount(v ?? '') == null ? 'Informe um valor válido' : null,
+        ),
+      ),
+    ],
   );
   Widget _progress(
     BuildContext context,

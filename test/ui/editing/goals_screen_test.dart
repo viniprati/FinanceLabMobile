@@ -14,10 +14,7 @@ void main() {
         ),
       ),
     );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Orçamento mensal (R\$)'),
-      '100,50',
-    );
+    await tester.enterText(find.byType(TextFormField).first, '100,50');
     await tester.tap(find.text('Salvar metas'));
     expect(changed?.goals.monthlyBudgetCents, 10050);
   });

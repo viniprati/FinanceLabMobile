@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../domain/models.dart';
 import '../../domain/money.dart';
 import '../../domain/summary.dart';
+import '../theme/app_theme.dart';
 
 class BudgetsScreen extends StatefulWidget {
   const BudgetsScreen({
@@ -23,11 +24,15 @@ class _BudgetsState extends State<BudgetsScreen> {
   final _key = GlobalKey<FormState>();
   final _cat = TextEditingController();
   final _limit = TextEditingController();
+  final _catFocus = FocusNode();
+  final _limitFocus = FocusNode();
   String? _editing;
   @override
   void dispose() {
     _cat.dispose();
     _limit.dispose();
+    _catFocus.dispose();
+    _limitFocus.dispose();
     super.dispose();
   }
 
@@ -37,7 +42,19 @@ class _BudgetsState extends State<BudgetsScreen> {
   }
 
   void _save() {
-    if (!(_key.currentState?.validate() ?? false)) return;
+    if (!(_key.currentState?.validate() ?? false)) {
+      final target = _cat.text.trim().isEmpty ? _catFocus : _limitFocus;
+      target.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || target.context == null) return;
+        Scrollable.ensureVisible(
+          target.context!,
+          alignment: .2,
+          duration: const Duration(milliseconds: 200),
+        );
+      });
+      return;
+    }
     final cat = _cat.text.trim();
     final amount = _amount(_limit.text)!;
     if (widget.data.budgets.any(
@@ -103,60 +120,75 @@ class _BudgetsState extends State<BudgetsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _key,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  _editing == null ? 'Novo orçamento' : 'Editar orçamento',
-                  style: Theme.of(context).textTheme.titleMedium,
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.topCenter,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 720),
+      child: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _key,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      _editing == null ? 'Novo orçamento' : 'Editar orçamento',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextFormField(
+                      controller: _cat,
+                      focusNode: _catFocus,
+                      textInputAction: TextInputAction.next,
+                      onFieldSubmitted: (_) => _limitFocus.requestFocus(),
+                      decoration: const InputDecoration(labelText: 'Categoria'),
+                      validator: (v) => v == null || v.trim().isEmpty
+                          ? 'Informe a categoria'
+                          : null,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextFormField(
+                      controller: _limit,
+                      focusNode: _limitFocus,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _save(),
+                      decoration: const InputDecoration(
+                        labelText: 'Limite mensal (R\$)',
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      validator: (v) => _amount(v ?? '') == null
+                          ? 'Informe um valor maior que zero'
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: _save,
+                      child: Text(_editing == null ? 'Adicionar' : 'Salvar'),
+                    ),
+                  ],
                 ),
-                TextFormField(
-                  controller: _cat,
-                  decoration: const InputDecoration(labelText: 'Categoria'),
-                  validator: (v) => v == null || v.trim().isEmpty
-                      ? 'Informe a categoria'
-                      : null,
-                ),
-                TextFormField(
-                  controller: _limit,
-                  decoration: const InputDecoration(
-                    labelText: 'Limite mensal (R\$)',
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  validator: (v) => _amount(v ?? '') == null
-                      ? 'Informe um valor maior que zero'
-                      : null,
-                ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: _save,
-                  child: Text(_editing == null ? 'Adicionar' : 'Salvar'),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+          const SizedBox(height: 16),
+          if (widget.data.budgets.isEmpty)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Text('Nenhum orçamento cadastrado ainda.'),
+              ),
+            ),
+          for (final b in widget.data.budgets) _card(context, b),
+        ],
       ),
-      const SizedBox(height: 16),
-      if (widget.data.budgets.isEmpty)
-        const Card(
-          child: Padding(
-            padding: EdgeInsets.all(20),
-            child: Text('Nenhum orçamento cadastrado ainda.'),
-          ),
-        ),
-      for (final b in widget.data.budgets) _card(context, b),
-    ],
+    ),
   );
   Widget _card(BuildContext context, Budget b) {
     final spent = widget.summary?.categoryCents[b.category] ?? 0;
@@ -165,7 +197,7 @@ class _BudgetsState extends State<BudgetsScreen> {
         : (spent / b.monthlyLimitCents).clamp(0.0, 1.0);
     final remaining = b.monthlyLimitCents - spent;
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

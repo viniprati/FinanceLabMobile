@@ -41,18 +41,10 @@ class AnalysisScreen extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                 vertical: AppSpacing.xs,
                               ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(child: Text(entry.key)),
-                                  const SizedBox(width: AppSpacing.sm),
-                                  Flexible(
-                                    child: Text(
-                                      Money.formatBr(entry.value),
-                                      textAlign: TextAlign.end,
-                                    ),
-                                  ),
-                                ],
+                              child: _amountRow(
+                                context,
+                                entry.key,
+                                Money.formatBr(entry.value),
                               ),
                             ),
                         ],
@@ -73,18 +65,10 @@ class AnalysisScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                       vertical: AppSpacing.xs,
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: Text(entry.key)),
-                        const SizedBox(width: AppSpacing.sm),
-                        Flexible(
-                          child: Text(
-                            Money.formatBr(entry.value),
-                            textAlign: TextAlign.end,
-                          ),
-                        ),
-                      ],
+                    child: _amountRow(
+                      context,
+                      entry.key,
+                      Money.formatBr(entry.value),
                     ),
                   ),
               ],
@@ -109,18 +93,10 @@ class AnalysisScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(child: Text(flow.month)),
-                                const SizedBox(width: AppSpacing.sm),
-                                Flexible(
-                                  child: Text(
-                                    Money.formatBr(flow.balanceCents),
-                                    textAlign: TextAlign.end,
-                                  ),
-                                ),
-                              ],
+                            _amountRow(
+                              context,
+                              flow.month,
+                              Money.formatBr(flow.balanceCents),
                             ),
                             Text(
                               'Receitas: ${Money.formatBr(flow.incomeCents)} · '
@@ -195,4 +171,29 @@ class AnalysisScreen extends StatelessWidget {
       ],
     );
   }
+
+  Widget _amountRow(BuildContext context, String label, String amount) =>
+      LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 480 ||
+              MediaQuery.textScalerOf(context).scale(14) > 21) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(label),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(amount),
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: Text(label)),
+              const SizedBox(width: AppSpacing.sm),
+              Flexible(child: Text(amount, textAlign: TextAlign.end)),
+            ],
+          );
+        },
+      );
 }

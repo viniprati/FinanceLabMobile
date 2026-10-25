@@ -45,13 +45,12 @@ void main() {
 
   Widget app(Widget child) => MaterialApp(
     theme: AppTheme.dark(),
-    home: MediaQuery(
-      data: const MediaQueryData(
-        size: Size(320, 700),
-        textScaler: TextScaler.linear(2),
-      ),
-      child: child,
+    builder: (context, appChild) => MediaQuery(
+      data: MediaQuery.of(context)
+          .copyWith(textScaler: const TextScaler.linear(2)),
+      child: appChild!,
     ),
+    home: child,
   );
 
   testWidgets('analysis exposes chart values and remains scrollable', (

@@ -18,18 +18,17 @@ void main() {
       final semantics = tester.ensureSemantics();
 
       await tester.pumpWidget(
-        MediaQuery(
-          data: const MediaQueryData(
-            size: Size(320, 640),
-            textScaler: TextScaler.linear(2),
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
           ),
-          child: MaterialApp(
-            theme: AppTheme.dark(),
-            home: HomeShell(
-              controller: controller,
-              apiUri: null,
-              openLegal: (_) async {},
-            ),
+          theme: AppTheme.dark(),
+          home: HomeShell(
+            controller: controller,
+            apiUri: null,
+            openLegal: (_) async {},
           ),
         ),
       );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/money.dart';
 import '../../domain/models.dart';
 import '../../domain/summary.dart';
+import '../theme/app_theme.dart';
 import '../widgets/section_card.dart';
 
 class MetricsScreen extends StatelessWidget {
@@ -84,7 +85,8 @@ class MetricsScreen extends StatelessWidget {
                   value: Money.formatBr(summary.investedCents),
                 ),
               ];
-              if (constraints.maxWidth < 360) {
+              if (constraints.maxWidth <=
+                  MediaQuery.textScalerOf(context).scale(360).clamp(360, 800)) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [cards[0], const SizedBox(height: 12), cards[1]],
@@ -136,27 +138,49 @@ class _MetricRow extends StatelessWidget {
   final IconData icon;
   final String label, value, helper;
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Icon(icon, color: Theme.of(context).colorScheme.primary),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final labelWidget = Row(
+        children: [
+          Icon(icon, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                Text(helper, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ],
+      );
+      final amount = ReadableValueText(
+        value: value,
+        style: Theme.of(context).textTheme.titleLarge
+            ?.copyWith(fontWeight: FontWeight.w900),
+      );
+      if (constraints.maxWidth < 500 ||
+          MediaQuery.textScalerOf(context).scale(16) > 22) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
-            Text(helper, style: Theme.of(context).textTheme.bodySmall),
+            labelWidget,
+            const SizedBox(height: AppSpacing.xs),
+            Padding(padding: const EdgeInsets.only(left: 36), child: amount),
           ],
-        ),
-      ),
-      Flexible(
-        child: Text(
-          value,
-          textAlign: TextAlign.end,
-          style: Theme.of(context).textTheme.titleLarge
-              ?.copyWith(fontWeight: FontWeight.w900),
-        ),
-      ),
-    ],
+        );
+      }
+      return Row(
+        children: [
+          Expanded(child: labelWidget),
+          const SizedBox(width: AppSpacing.sm),
+          Flexible(child: amount),
+        ],
+      );
+    },
   );
 }

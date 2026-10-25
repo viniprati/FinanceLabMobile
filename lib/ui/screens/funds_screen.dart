@@ -4,6 +4,8 @@ import 'package:uuid/uuid.dart';
 import '../../domain/models.dart';
 import '../../domain/money.dart';
 import '../../domain/summary.dart';
+import '../theme/app_theme.dart';
+import '../widgets/section_card.dart';
 
 class FundsScreen extends StatefulWidget {
   const FundsScreen({
@@ -29,6 +31,7 @@ class _FundsState extends State<FundsScreen> {
   final _invested = TextEditingController();
   final _current = TextEditingController();
   final _yield = TextEditingController();
+  final _focuses = List.generate(8, (_) => FocusNode());
   String? _editing;
   @override
   void dispose() {
@@ -44,6 +47,9 @@ class _FundsState extends State<FundsScreen> {
     ]) {
       c.dispose();
     }
+    for (final focus in _focuses) {
+      focus.dispose();
+    }
     super.dispose();
   }
 
@@ -53,7 +59,28 @@ class _FundsState extends State<FundsScreen> {
   }
 
   void _save() {
-    if (!(_key.currentState?.validate() ?? false)) return;
+    if (!(_key.currentState?.validate() ?? false)) {
+      final invalidIndex = _name.text.trim().isEmpty
+          ? 0
+          : _category.text.trim().isEmpty
+          ? 2
+          : _amount(_invested.text) == null
+          ? 5
+          : _amount(_current.text) == null
+          ? 6
+          : 7;
+      final target = _focuses[invalidIndex];
+      target.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || target.context == null) return;
+        Scrollable.ensureVisible(
+          target.context!,
+          alignment: .2,
+          duration: const Duration(milliseconds: 200),
+        );
+      });
+      return;
+    }
     final item = Fund(
       id: _editing ?? const Uuid().v4(),
       name: _name.text.trim(),
@@ -129,62 +156,129 @@ class _FundsState extends State<FundsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => ListView(
-    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-    padding: EdgeInsets.fromLTRB(
-      16,
-      16,
-      16,
-      16 + MediaQuery.viewInsetsOf(context).bottom,
-    ),
-    children: [
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _key,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  _editing == null ? 'Novo fundo' : 'Editar fundo',
-                  style: Theme.of(context).textTheme.titleMedium,
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.topCenter,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 720),
+      child: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _key,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      _editing == null ? 'Novo fundo' : 'Editar fundo',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final twoColumns =
+                            constraints.maxWidth >= 640 &&
+                            MediaQuery.textScalerOf(context).scale(14) <= 19;
+                        final fieldWidth = twoColumns
+                            ? (constraints.maxWidth - AppSpacing.sm) / 2
+                            : constraints.maxWidth;
+                        return Wrap(
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.sm,
+                          children: [
+                            SizedBox(
+                              width: fieldWidth,
+                              child: _field(_name, 'Nome', 0, required: true),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: _field(_account, 'Conta ou corretora', 1),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: _field(
+                                _category,
+                                'Categoria',
+                                2,
+                                required: true,
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: _field(_benchmark, 'Benchmark', 3),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: _field(_liquidity, 'Liquidez', 4),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: _money(
+                                _invested,
+                                'Valor aplicado',
+                                5,
+                                required: true,
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: _money(
+                                _current,
+                                'Valor atual',
+                                6,
+                                required: true,
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: _money(
+                                _yield,
+                                'Rendimento mensal',
+                                7,
+                                allowNegative: true,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    FilledButton(
+                      onPressed: _save,
+                      child: Text(_editing == null ? 'Adicionar' : 'Salvar'),
+                    ),
+                  ],
                 ),
-                _field(_name, 'Nome', required: true),
-                _field(_account, 'Conta ou corretora'),
-                _field(_category, 'Categoria', required: true),
-                _field(_benchmark, 'Benchmark'),
-                _field(_liquidity, 'Liquidez'),
-                _money(_invested, 'Valor aplicado', required: true),
-                _money(_current, 'Valor atual', required: true),
-                _money(_yield, 'Rendimento mensal', allowNegative: true),
-                const SizedBox(height: 8),
-                FilledButton(
-                  onPressed: _save,
-                  child: Text(_editing == null ? 'Adicionar' : 'Salvar'),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+          const SizedBox(height: 12),
+          if (widget.data.funds.isEmpty)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Text('Nenhum fundo cadastrado ainda.'),
+              ),
+            ),
+          for (final f in widget.data.funds) _card(context, f),
+        ],
       ),
-      const SizedBox(height: 12),
-      if (widget.data.funds.isEmpty)
-        const Card(
-          child: Padding(
-            padding: EdgeInsets.all(20),
-            child: Text('Nenhum fundo cadastrado ainda.'),
-          ),
-        ),
-      for (final f in widget.data.funds) _card(context, f),
-    ],
+    ),
   );
   Widget _field(
     TextEditingController c,
-    String label, {
+    String label,
+    int index, {
     bool required = false,
   }) => TextFormField(
     controller: c,
+    focusNode: _focuses[index],
+    textInputAction: index == 7 ? TextInputAction.done : TextInputAction.next,
+    onFieldSubmitted: (_) =>
+        index == 7 ? _save() : _focuses[index + 1].requestFocus(),
     decoration: InputDecoration(labelText: label),
     validator: required
         ? (v) => v == null || v.trim().isEmpty ? 'Informe $label' : null
@@ -192,13 +286,24 @@ class _FundsState extends State<FundsScreen> {
   );
   Widget _money(
     TextEditingController c,
-    String label, {
+    String label,
+    int index, {
     bool required = false,
     bool allowNegative = false,
   }) => TextFormField(
     controller: c,
-    decoration: InputDecoration(labelText: '$label (R\$)'),
-    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    focusNode: _focuses[index],
+    textInputAction: index == 7 ? TextInputAction.done : TextInputAction.next,
+    onFieldSubmitted: (_) =>
+        index == 7 ? _save() : _focuses[index + 1].requestFocus(),
+    decoration: InputDecoration(
+      labelText: allowNegative ? 'Rendimento (R\$)' : '$label (R\$)',
+      helperText: allowNegative ? 'Mensal; negativo para perdas' : null,
+    ),
+    keyboardType: TextInputType.numberWithOptions(
+      decimal: true,
+      signed: allowNegative,
+    ),
     validator: (v) {
       if (v == null || v.trim().isEmpty) {
         return required ? 'Informe $label' : null;
@@ -211,7 +316,7 @@ class _FundsState extends State<FundsScreen> {
   Widget _card(BuildContext context, Fund f) {
     final result = f.currentCents - f.investedCents;
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 8, 8),
         child: Column(
@@ -231,10 +336,13 @@ class _FundsState extends State<FundsScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              '${f.account.isEmpty ? f.category : f.account} · ${Money.formatBr(f.currentCents)}',
-            ),
-            Text('Resultado: ${Money.formatBr(result)}'),
+            Text(f.account.isEmpty ? f.category : f.account),
+            const SizedBox(height: AppSpacing.xs),
+            const Text('Valor atual'),
+            ReadableValueText(value: Money.formatBr(f.currentCents)),
+            const SizedBox(height: AppSpacing.xs),
+            const Text('Resultado'),
+            ReadableValueText(value: Money.formatBr(result)),
             OverflowBar(
               alignment: MainAxisAlignment.end,
               spacing: 4,

@@ -88,16 +88,10 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
-    await tester.pumpWidget(
-      MediaQuery(
-        data: const MediaQueryData(
-          size: Size(320, 640),
-          textScaler: TextScaler.linear(2),
-        ),
-        child: const MainApp(),
-      ),
-    );
+    await tester.pumpWidget(const MainApp());
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Explorar demonstração'));
     await tester.pumpAndSettle();
@@ -123,16 +117,10 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
-    await tester.pumpWidget(
-      MediaQuery(
-        data: const MediaQueryData(
-          size: Size(900, 700),
-          textScaler: TextScaler.linear(2),
-        ),
-        child: const MainApp(),
-      ),
-    );
+    await tester.pumpWidget(const MainApp());
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Explorar demonstração'));
     await tester.tap(find.text('Explorar demonstração'));

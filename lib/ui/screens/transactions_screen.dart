@@ -4,6 +4,8 @@ import 'package:uuid/uuid.dart';
 import '../../domain/models.dart';
 import '../../domain/summary.dart';
 import '../../domain/money.dart';
+import '../theme/app_theme.dart';
+import '../widgets/section_card.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({
@@ -29,6 +31,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       description = TextEditingController(),
       subcategory = TextEditingController(),
       amount = TextEditingController();
+  final categoryFocus = FocusNode();
+  final subcategoryFocus = FocusNode();
+  final descriptionFocus = FocusNode();
+  final amountFocus = FocusNode();
   String kind = 'expense';
   DateTime date = DateTime.now();
   final search = TextEditingController();
@@ -41,6 +47,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     description.dispose();
     subcategory.dispose();
     amount.dispose();
+    categoryFocus.dispose();
+    subcategoryFocus.dispose();
+    descriptionFocus.dispose();
+    amountFocus.dispose();
     search.dispose();
     super.dispose();
   }
@@ -52,7 +62,26 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   void add() {
     if (widget.editingBlocked) return;
-    if (!(keyForm.currentState?.validate() ?? false)) return;
+    if (!(keyForm.currentState?.validate() ?? false)) {
+      FocusNode? target;
+      if (category.text.trim().isEmpty) {
+        target = categoryFocus;
+      } else if (cents(amount.text) == null) {
+        target = amountFocus;
+      }
+      target?.requestFocus();
+      if (target != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || target?.context == null) return;
+          Scrollable.ensureVisible(
+            target!.context!,
+            alignment: .2,
+            duration: const Duration(milliseconds: 200),
+          );
+        });
+      }
+      return;
+    }
     final t = Transaction(
       id: const Uuid().v4(),
       type: kind == 'income' ? 'income' : 'expense',
@@ -141,98 +170,117 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           (filterKind == 'all' || t.kind == filterKind) &&
           (effectiveCategory == 'all' || t.category == effectiveCategory);
     }).toList();
-    return ListView(
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: EdgeInsets.fromLTRB(
-        16,
-        16,
-        16,
-        16 + MediaQuery.viewInsetsOf(context).bottom,
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.all(AppSpacing.md),
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.icon(
+                onPressed: widget.editingBlocked
+                    ? null
+                    : () => setState(() => showForm = !showForm),
+                icon: Icon(showForm ? Icons.close : Icons.add),
+                label: Text(showForm ? 'Fechar' : 'Novo lançamento'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (showForm) _formCard(),
+            if (showForm) const SizedBox(height: 16),
+            TextField(
+              controller: search,
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(
+                labelText: 'Buscar',
+                prefixIcon: Icon(Icons.search),
+              ),
+            ),
+            const SizedBox(height: 12),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final twoColumns =
+                    constraints.maxWidth >=
+                    MediaQuery.textScalerOf(context).scale(520).clamp(520, 900);
+                final filterWidth = twoColumns
+                    ? (constraints.maxWidth - AppSpacing.sm) / 2
+                    : constraints.maxWidth;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    SizedBox(
+                      width: filterWidth,
+                      child: DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        initialValue: filterKind,
+                        decoration: const InputDecoration(labelText: 'Tipo'),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'all',
+                            child: Text('Todos os tipos'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'income',
+                            child: Text('Receitas'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'expense',
+                            child: Text('Despesas'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'contribution',
+                            child: Text('Aportes'),
+                          ),
+                        ],
+                        onChanged: (value) =>
+                            setState(() => filterKind = value ?? 'all'),
+                      ),
+                    ),
+                    SizedBox(
+                      width: filterWidth,
+                      child: PopupMenuButton<String>(
+                        tooltip: 'Filtrar por categoria',
+                        onSelected: (value) =>
+                            setState(() => filterCategory = value),
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'all',
+                            child: Text('Todas as categorias'),
+                          ),
+                          for (final value in categories)
+                            PopupMenuItem(value: value, child: Text(value)),
+                        ],
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Categoria',
+                            suffixIcon: Icon(Icons.arrow_drop_down),
+                          ),
+                          child: Text(
+                            effectiveCategory == 'all'
+                                ? 'Todas as categorias'
+                                : effectiveCategory,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            if (filtered.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Text('Nenhum lançamento neste período.'),
+              ),
+            ...filtered.map((t) => _transactionCard(t)),
+          ],
+        ),
       ),
-      children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: FilledButton.icon(
-            onPressed: widget.editingBlocked
-                ? null
-                : () => setState(() => showForm = !showForm),
-            icon: Icon(showForm ? Icons.close : Icons.add),
-            label: Text(showForm ? 'Fechar' : 'Novo lançamento'),
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (showForm) _formCard(),
-        if (showForm) const SizedBox(height: 16),
-        TextField(
-          controller: search,
-          onChanged: (_) => setState(() {}),
-          decoration: const InputDecoration(
-            labelText: 'Buscar',
-            prefixIcon: Icon(Icons.search),
-          ),
-        ),
-        const SizedBox(height: 12),
-        LayoutBuilder(
-          builder: (context, constraints) => Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              SizedBox(
-                width: constraints.maxWidth > 500
-                    ? (constraints.maxWidth - 12) / 2
-                    : constraints.maxWidth,
-                child: DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  initialValue: filterKind,
-                  decoration: const InputDecoration(labelText: 'Tipo'),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'all',
-                      child: Text('Todos os tipos'),
-                    ),
-                    DropdownMenuItem(value: 'income', child: Text('Receitas')),
-                    DropdownMenuItem(value: 'expense', child: Text('Despesas')),
-                    DropdownMenuItem(
-                      value: 'contribution',
-                      child: Text('Aportes'),
-                    ),
-                  ],
-                  onChanged: (value) =>
-                      setState(() => filterKind = value ?? 'all'),
-                ),
-              ),
-              SizedBox(
-                width: constraints.maxWidth > 500
-                    ? (constraints.maxWidth - 12) / 2
-                    : constraints.maxWidth,
-                child: DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  key: ValueKey(effectiveCategory),
-                  initialValue: effectiveCategory,
-                  decoration: const InputDecoration(labelText: 'Categoria'),
-                  items: [
-                    const DropdownMenuItem(
-                      value: 'all',
-                      child: Text('Todas as categorias'),
-                    ),
-                    for (final value in categories)
-                      DropdownMenuItem(value: value, child: Text(value)),
-                  ],
-                  onChanged: (value) =>
-                      setState(() => filterCategory = value ?? 'all'),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (filtered.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(24),
-            child: Text('Nenhum lançamento neste período.'),
-          ),
-        ...filtered.map((t) => _transactionCard(t)),
-      ],
     );
   }
 
@@ -255,18 +303,28 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               ],
               onChanged: (v) => setState(() => kind = v ?? 'expense'),
             ),
+            const SizedBox(height: AppSpacing.sm),
             TextFormField(
               controller: category,
+              focusNode: categoryFocus,
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) => subcategoryFocus.requestFocus(),
               decoration: const InputDecoration(labelText: 'Categoria'),
               validator: (v) =>
                   v == null || v.trim().isEmpty ? 'Informe a categoria' : null,
             ),
+            const SizedBox(height: AppSpacing.sm),
             TextFormField(
               controller: subcategory,
+              focusNode: subcategoryFocus,
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) => descriptionFocus.requestFocus(),
               decoration: const InputDecoration(
-                labelText: 'Subcategoria (opcional)',
+                labelText: 'Subcategoria',
+                helperText: 'Opcional',
               ),
             ),
+            const SizedBox(height: AppSpacing.xs),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Data'),
@@ -284,12 +342,20 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 if (selected != null) setState(() => date = selected);
               },
             ),
+            const SizedBox(height: AppSpacing.sm),
             TextFormField(
               controller: description,
+              focusNode: descriptionFocus,
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) => amountFocus.requestFocus(),
               decoration: const InputDecoration(labelText: 'Descrição'),
             ),
+            const SizedBox(height: AppSpacing.sm),
             TextFormField(
               controller: amount,
+              focusNode: amountFocus,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => add(),
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
@@ -297,7 +363,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               validator: (v) =>
                   cents(v ?? '') == null ? 'Informe um valor válido' : null,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             FilledButton.icon(
               onPressed: widget.editingBlocked ? null : add,
               icon: const Icon(Icons.add),
@@ -310,6 +376,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   );
 
   Widget _transactionCard(Transaction transaction) => Card(
+    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
     child: Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
       child: Column(
@@ -334,7 +401,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             ],
           ),
           Text('${transaction.category} · ${transaction.date}'),
-          Text(Money.formatBr(transaction.amountCents)),
+          ReadableValueText(value: Money.formatBr(transaction.amountCents)),
         ],
       ),
     ),

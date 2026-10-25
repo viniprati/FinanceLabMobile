@@ -34,10 +34,12 @@ void main() {
 
   Widget app(Widget child) => MaterialApp(
     theme: AppTheme.light(),
-    home: MediaQuery(
-      data: const MediaQueryData(textScaler: TextScaler.linear(2)),
-      child: child,
+    builder: (context, appChild) => MediaQuery(
+      data: MediaQuery.of(context)
+          .copyWith(textScaler: const TextScaler.linear(2)),
+      child: appChild!,
     ),
+    home: child,
   );
 
   testWidgets('overview remains scrollable and readable with large text', (

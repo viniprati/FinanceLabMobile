@@ -8,6 +8,7 @@ import '../../app_controller.dart';
 import '../../data/api.dart';
 import '../../domain/models.dart';
 import '../../domain/money.dart';
+import '../theme/app_theme.dart';
 
 class DataPrivacyScreen extends StatefulWidget {
   const DataPrivacyScreen({super.key, required this.controller});
@@ -102,6 +103,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
     final approved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        scrollable: true,
         title: const Text('Substituir dados financeiros?'),
         content: const Text(
           'A importação substituirá lançamentos, fundos, orçamentos e metas da sua conta. Esta ação será salva no servidor.',
@@ -133,6 +135,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
       final approved = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
+          scrollable: true,
           title: const Text('Solicitar eliminação de dados?'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -313,7 +316,15 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Meus dados e privacidade')),
     body: ListView(
-      padding: const EdgeInsets.all(16),
+      padding:
+          EdgeInsets.symmetric(
+            horizontal: MediaQuery.sizeOf(context).width > 800
+                ? (MediaQuery.sizeOf(context).width - 768) / 2
+                : AppSpacing.md,
+            vertical: AppSpacing.md,
+          ).copyWith(
+            bottom: AppSpacing.md + MediaQuery.viewPaddingOf(context).bottom,
+          ),
       children: [
         Text(
           'Controle dos seus dados',
@@ -430,6 +441,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
           const SizedBox(height: 12),
         ],
         Card(
+          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
           child: ListTile(
             leading: const Icon(Icons.save_alt_outlined),
             title: const Text('Salvar cópia local'),
@@ -442,6 +454,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
           ),
         ),
         Card(
+          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
           child: ListTile(
             leading: const Icon(Icons.download_outlined),
             title: const Text('Exportar meus dados'),
@@ -453,6 +466,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
           ),
         ),
         Card(
+          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
           child: ListTile(
             leading: const Icon(Icons.upload_file_outlined),
             title: const Text('Importar dados financeiros'),
@@ -465,6 +479,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
         ),
         if (widget.controller.hasUnsavedChanges && !widget.controller.demo)
           Card(
+            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: ListTile(
               leading: const Icon(Icons.restore_outlined),
               title: const Text('Descartar alterações pendentes'),

@@ -50,7 +50,8 @@ class OverviewScreen extends StatelessWidget {
               tone: Colors.deepOrange,
             ),
           ];
-          if (c.maxWidth <= 650) {
+          if (c.maxWidth <=
+              MediaQuery.textScalerOf(context).scale(650).clamp(650, 1100)) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -86,58 +87,77 @@ class OverviewScreen extends StatelessWidget {
       SectionCard(
         title: 'Patrimônio',
         subtitle: '${data.funds.length} fundo(s) monitorado(s)',
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            SizedBox(
-              width: 220,
-              child: MetricCard(
-                label: 'Carteira atual',
-                value: Money.formatBr(summary.portfolioCents),
-                icon: Icons.savings_outlined,
-              ),
-            ),
-            SizedBox(
-              width: 220,
-              child: MetricCard(
-                label: 'Investido',
-                value: Money.formatBr(summary.investedCents),
-                icon: Icons.account_balance_outlined,
-              ),
-            ),
-            SizedBox(
-              width: 220,
-              child: MetricCard(
-                label: 'Resultado da carteira',
-                value: Money.formatBr(summary.portfolioGainCents),
-                icon: Icons.show_chart_outlined,
-              ),
-            ),
-            SizedBox(
-              width: 220,
-              child: MetricCard(
-                label: 'Patrimônio monitorado',
-                value: Money.formatBr(summary.netWorthCents),
-                caption: 'Saldo do mês + carteira',
-                icon: Icons.assessment_outlined,
-              ),
-            ),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final minimumWidth = MediaQuery.textScalerOf(context)
+                .scale(220)
+                .clamp(220, 440);
+            final columns =
+                ((constraints.maxWidth + AppSpacing.sm) /
+                        (minimumWidth + AppSpacing.sm))
+                    .floor()
+                    .clamp(1, 4);
+            final cardWidth =
+                (constraints.maxWidth - AppSpacing.sm * (columns - 1)) /
+                columns;
+            return Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                SizedBox(
+                  width: cardWidth,
+                  child: MetricCard(
+                    label: 'Carteira atual',
+                    value: Money.formatBr(summary.portfolioCents),
+                    icon: Icons.savings_outlined,
+                  ),
+                ),
+                SizedBox(
+                  width: cardWidth,
+                  child: MetricCard(
+                    label: 'Investido',
+                    value: Money.formatBr(summary.investedCents),
+                    icon: Icons.account_balance_outlined,
+                  ),
+                ),
+                SizedBox(
+                  width: cardWidth,
+                  child: MetricCard(
+                    label: 'Resultado da carteira',
+                    value: Money.formatBr(summary.portfolioGainCents),
+                    icon: Icons.show_chart_outlined,
+                  ),
+                ),
+                SizedBox(
+                  width: cardWidth,
+                  child: MetricCard(
+                    label: 'Patrimônio monitorado',
+                    value: Money.formatBr(summary.netWorthCents),
+                    caption: 'Saldo do mês + carteira',
+                    icon: Icons.assessment_outlined,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
       const SizedBox(height: AppSpacing.md),
       SectionCard(
         title: 'Destino das saídas',
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ListTile(
-              title: const Text('Gastos de consumo'),
-              trailing: Text(Money.formatBr(summary.livingExpensesCents)),
+            const Text('Gastos de consumo'),
+            ReadableValueText(
+              value: Money.formatBr(summary.livingExpensesCents),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            ListTile(
-              title: const Text('Aportes'),
-              trailing: Text(Money.formatBr(summary.contributionsCents)),
+            const SizedBox(height: AppSpacing.sm),
+            const Text('Aportes'),
+            ReadableValueText(
+              value: Money.formatBr(summary.contributionsCents),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
           ],
         ),

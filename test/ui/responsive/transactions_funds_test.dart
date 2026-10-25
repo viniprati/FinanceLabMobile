@@ -7,13 +7,13 @@ import 'package:financelab_mobile/ui/screens/transactions_screen.dart';
 void main() {
   const compact = Size(320, 640);
 
-  Widget shell(Widget child) => MediaQuery(
-    data: const MediaQueryData(
-      size: compact,
-      textScaler: TextScaler.linear(2),
-      viewInsets: EdgeInsets.only(bottom: 280),
+  Widget shell(Widget child) => MaterialApp(
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(context)
+          .copyWith(textScaler: const TextScaler.linear(2)),
+      child: child!,
     ),
-    child: MaterialApp(home: Scaffold(body: child)),
+    home: Scaffold(body: child),
   );
 
   testWidgets('transactions stays usable with large text and keyboard inset', (
@@ -21,8 +21,10 @@ void main() {
   ) async {
     tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;
+    tester.view.viewInsets = const FakeViewPadding(bottom: 280);
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
     await tester.pumpWidget(
       shell(
         TransactionsScreen(
@@ -67,6 +69,12 @@ void main() {
   testWidgets('fund actions wrap below content on compact large text', (
     tester,
   ) async {
+    tester.view.physicalSize = compact;
+    tester.view.devicePixelRatio = 1;
+    tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
     await tester.pumpWidget(
       shell(
         FundsScreen(

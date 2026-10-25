@@ -84,46 +84,60 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _brandHeader(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    final icon = ExcludeSemantics(
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: scheme.primaryContainer,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Icon(
+          Icons.account_balance_wallet_rounded,
+          color: scheme.onPrimaryContainer,
+          size: 30,
+        ),
+      ),
+    );
+    final text = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ExcludeSemantics(
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: scheme.primaryContainer,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(
-              Icons.account_balance_wallet_rounded,
-              color: scheme.onPrimaryContainer,
-              size: 30,
-            ),
+        Semantics(
+          header: true,
+          child: Text(
+            'FinanceLab',
+            style: Theme.of(context).textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.w800),
           ),
         ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Semantics(
-                header: true,
-                child: Text(
-                  'FinanceLab',
-                  style: Theme.of(context).textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w800),
-                ),
-              ),
-              Text(
-                'Seu dinheiro, com clareza.',
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(color: scheme.onSurfaceVariant),
-              ),
-            ],
-          ),
+        Text(
+          'Seu dinheiro, com clareza.',
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: scheme.onSurfaceVariant),
         ),
       ],
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth <
+            MediaQuery.textScalerOf(context).scale(250)) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              icon,
+              const SizedBox(height: AppSpacing.sm),
+              text,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            icon,
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(child: text),
+          ],
+        );
+      },
     );
   }
 

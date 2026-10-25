@@ -7,12 +7,18 @@ Widget _app({
   required Uri? baseUri,
   required VoidCallback onDemo,
   Brightness brightness = Brightness.light,
+  double textScale = 1,
 }) {
   final theme = brightness == Brightness.dark
       ? AppTheme.dark()
       : AppTheme.light();
   return MaterialApp(
     theme: theme,
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(context)
+          .copyWith(textScaler: TextScaler.linear(textScale)),
+      child: child!,
+    ),
     home: LoginScreen(
       baseUri: baseUri,
       onLogin: (_, _, _) async {},
@@ -26,9 +32,11 @@ Widget _app({
 void _setCompactLargeText(WidgetTester tester) {
   tester.view.physicalSize = const Size(320, 640);
   tester.view.devicePixelRatio = 1;
+  tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 24);
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.view.resetViewInsets);
+  addTearDown(tester.view.resetViewPadding);
 }
 
 void main() {
@@ -36,17 +44,7 @@ void main() {
     'login offline prioritizes one demo action on a compact large-text screen',
     (tester) async {
       _setCompactLargeText(tester);
-      await tester.pumpWidget(
-        MediaQuery(
-          data: const MediaQueryData(
-            size: Size(320, 640),
-            padding: EdgeInsets.only(top: 24, bottom: 24),
-            viewPadding: EdgeInsets.only(top: 24, bottom: 24),
-            textScaler: TextScaler.linear(2),
-          ),
-          child: _app(baseUri: null, onDemo: () {}),
-        ),
-      );
+      await tester.pumpWidget(_app(baseUri: null, onDemo: () {}, textScale: 2));
       await tester.pumpAndSettle();
 
       expect(find.text('Explorar demonstração'), findsOneWidget);
@@ -73,16 +71,7 @@ void main() {
     (tester) async {
       _setCompactLargeText(tester);
       tester.view.viewInsets = const FakeViewPadding(bottom: 280);
-      await tester.pumpWidget(
-        MediaQuery(
-          data: const MediaQueryData(
-            size: Size(320, 640),
-            viewInsets: EdgeInsets.only(bottom: 280),
-            textScaler: TextScaler.linear(2),
-          ),
-          child: _app(baseUri: null, onDemo: () {}),
-        ),
-      );
+      await tester.pumpWidget(_app(baseUri: null, onDemo: () {}, textScale: 2));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Entrar com credenciais da demo'));
       await tester.pumpAndSettle();
@@ -102,7 +91,11 @@ void main() {
   ) async {
     _setCompactLargeText(tester);
     await tester.pumpWidget(
-      _app(baseUri: Uri.parse('https://example.test'), onDemo: () {}),
+      _app(
+        baseUri: Uri.parse('https://example.test'),
+        onDemo: () {},
+        textScale: 2,
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -118,16 +111,11 @@ void main() {
     ) async {
       _setCompactLargeText(tester);
       await tester.pumpWidget(
-        MediaQuery(
-          data: const MediaQueryData(
-            size: Size(320, 640),
-            textScaler: TextScaler.linear(2),
-          ),
-          child: _app(
-            baseUri: Uri.parse('https://example.test'),
-            onDemo: () {},
-            brightness: brightness,
-          ),
+        _app(
+          baseUri: Uri.parse('https://example.test'),
+          onDemo: () {},
+          brightness: brightness,
+          textScale: 2,
         ),
       );
       await tester.pumpAndSettle();

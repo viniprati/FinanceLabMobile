@@ -188,9 +188,7 @@ class _LegendDot extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Flexible(
-          child: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis),
-        ),
+        Flexible(child: Text(label)),
       ],
     ),
   );

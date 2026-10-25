@@ -55,6 +55,7 @@ class _HomeShellState extends State<HomeShell> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
+          scrollable: true,
           title: Text(
             controller.unreadableDraft
                 ? 'Sair com rascunho local?'
@@ -241,7 +242,17 @@ class _HomeShellState extends State<HomeShell> {
                             ],
                           ),
                           const VerticalDivider(width: 1),
-                          Expanded(child: body),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 1200,
+                                ),
+                                child: body,
+                              ),
+                            ),
+                          ),
                         ],
                       )
                     : body,
@@ -432,10 +443,6 @@ class _StatusStrip extends StatelessWidget {
                     child: ExcludeSemantics(
                       child: Text(
                         text,
-                        maxLines: semanticsText == null ? null : 2,
-                        overflow: semanticsText == null
-                            ? null
-                            : TextOverflow.ellipsis,
                         style: TextStyle(color: scheme.onSecondaryContainer),
                       ),
                     ),
