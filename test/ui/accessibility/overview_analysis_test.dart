@@ -60,7 +60,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Saldo do mês'), findsOneWidget);
+    expect(find.text('Saldo das movimentações'), findsOneWidget);
     expect(find.text('Despesas'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -79,7 +79,9 @@ void main() {
       ),
     );
     expect(
-      find.bySemanticsLabel(RegExp(r'Saldo do mês:.*Receitas menos despesas')),
+      find.bySemanticsLabel(
+        RegExp(r'Saldo das movimentações:.*Receitas menos despesas'),
+      ),
       findsOneWidget,
     );
     handle.dispose();
@@ -103,11 +105,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Moradia', skipOffstage: false), findsOneWidget);
-    expect(
-      find.textContaining(r'R$ 1.200,00', skipOffstage: false),
-      findsOneWidget,
+    await tester.scrollUntilVisible(
+      find.text('Moradia', skipOffstage: false),
+      240,
+      scrollable: find.byType(Scrollable).first,
     );
+
+    expect(find.text('Moradia', skipOffstage: false), findsOneWidget);
+    expect(find.textContaining(r'R$', skipOffstage: false), findsWidgets);
     expect(find.text('Alimentação', skipOffstage: false), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

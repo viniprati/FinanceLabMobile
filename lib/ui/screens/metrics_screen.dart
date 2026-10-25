@@ -18,15 +18,15 @@ class MetricsScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         SectionCard(
-          title: 'Saúde financeira',
+          title: 'Saúde das movimentações',
           subtitle: 'Indicadores do período',
           child: Column(
             children: [
               _MetricRow(
                 icon: Icons.account_balance_wallet_outlined,
-                label: 'Saldo',
+                label: 'Saldo das movimentações',
                 value: Money.formatBr(summary.cashBalanceCents),
-                helper: 'Receitas menos despesas',
+                helper: 'Receitas menos despesas; não é saldo bancário',
               ),
               const Divider(height: 24),
               _MetricRow(
@@ -43,6 +43,13 @@ class MetricsScreen extends StatelessWidget {
                 label: 'Gastos de consumo',
                 value: Money.formatBr(summary.livingExpensesCents),
                 helper: 'Despesas sem aportes',
+              ),
+              const Divider(height: 24),
+              _MetricRow(
+                icon: Icons.add_circle_outline,
+                label: 'Aportes no mês',
+                value: Money.formatBr(summary.contributionsCents),
+                helper: 'Saídas para investimentos; incluídas em despesas',
               ),
               const Divider(height: 24),
               _MetricRow(
@@ -72,7 +79,8 @@ class MetricsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         SectionCard(
-          title: 'Resumo de patrimônio',
+          title: 'Carteira atual monitorada',
+          subtitle: 'Valores atuais dos fundos; não é evolução histórica',
           child: LayoutBuilder(
             builder: (context, constraints) {
               final cards = [
@@ -109,7 +117,7 @@ class MetricsScreen extends StatelessWidget {
             children: [
               _MetricRow(
                 icon: Icons.trending_up,
-                label: 'Resultado acumulado',
+                label: 'Resultado da carteira',
                 value: Money.formatBr(summary.portfolioGainCents),
                 helper: percentage(summary.portfolioReturnRate),
               ),

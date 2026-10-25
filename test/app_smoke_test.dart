@@ -47,7 +47,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.text('Demonstração local • dados fictícios'), findsOneWidget);
-    expect(find.text('Saldo do mês'), findsOneWidget);
+    expect(find.text('Saldo das movimentações'), findsOneWidget);
 
     await tester.tap(find.text('Lançamentos').last);
     await tester.pumpAndSettle();

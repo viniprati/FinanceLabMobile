@@ -4,6 +4,7 @@ import 'package:financelab_mobile/domain/models.dart';
 import 'package:financelab_mobile/domain/summary.dart';
 import 'package:financelab_mobile/ui/screens/analysis_screen.dart';
 import 'package:financelab_mobile/ui/screens/overview_screen.dart';
+import 'package:financelab_mobile/ui/theme/app_theme.dart';
 
 void main() {
   testWidgets('overview shows an honest empty state', (tester) async {
@@ -15,11 +16,12 @@ void main() {
     final summary = FinanceSummary.fromData(data, '2026-10');
     await tester.pumpWidget(
       MaterialApp(
+        theme: AppTheme.light(),
         home: OverviewScreen(data: data, summary: summary),
       ),
     );
     expect(
-      find.text('Adicione seu primeiro lançamento para começar.'),
+      find.text('Ainda não há despesas de consumo neste mês.'),
       findsOneWidget,
     );
   });
@@ -42,11 +44,18 @@ void main() {
     final summary = FinanceSummary.fromData(data, '2026-10');
     await tester.pumpWidget(
       MaterialApp(
+        theme: AppTheme.light(),
         home: AnalysisScreen(data: data, summary: summary),
       ),
     );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Moradia'),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Moradia'), findsOneWidget);
-    expect(find.text('R\$ 1.250,00 · 100%'), findsOneWidget);
+    expect(find.text('R\$ 1.250,00'), findsOneWidget);
     expect(find.text('Sem despesas no período'), findsNothing);
   });
 }

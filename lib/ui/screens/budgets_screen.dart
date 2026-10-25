@@ -256,7 +256,9 @@ class _BudgetsState extends State<BudgetsScreen> {
                   ? '${Money.formatBr(remaining)} restantes'
                   : '${Money.formatBr(-remaining)} acima do limite',
               style: TextStyle(
-                color: remaining >= 0 ? Colors.green : Colors.red,
+                color: remaining >= 0
+                    ? Theme.of(context).extension<FinanceColors>()!.income
+                    : Theme.of(context).extension<FinanceColors>()!.expense,
               ),
             ),
           ],

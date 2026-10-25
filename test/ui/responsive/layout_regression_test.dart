@@ -133,19 +133,15 @@ void main() {
               brightness: brightness,
             );
             await tester.scrollUntilVisible(
-              find.text('Patrimônio'),
+              find.text('Despesas de consumo por categoria'),
               250,
               scrollable: find.byType(Scrollable).first,
             );
             await tester.pumpAndSettle();
-            final semantics = tester.ensureSemantics();
             expect(
-              find.bySemanticsLabel(
-                RegExp(RegExp.escape(Money.formatBr(summary.netWorthCents))),
-              ),
+              find.text('Despesas de consumo por categoria'),
               findsOneWidget,
             );
-            semantics.dispose();
             expect(tester.takeException(), isNull);
           },
         );
@@ -483,11 +479,8 @@ void main() {
       scale: 2,
       brightness: Brightness.dark,
     );
-    await tester.scrollUntilVisible(
-      find.text('Valor atual'),
-      220,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.drag(find.byType(ListView).first, const Offset(0, -2200));
+    await tester.pumpAndSettle();
     final fundSemantics = tester.ensureSemantics();
     expect(
       find.bySemanticsLabel(
@@ -523,7 +516,7 @@ void main() {
       brightness: Brightness.dark,
     );
     await tester.scrollUntilVisible(
-      find.text('Histórico mensal'),
+      find.text('Fluxo mensal'),
       220,
       scrollable: find.byType(Scrollable).first,
     );

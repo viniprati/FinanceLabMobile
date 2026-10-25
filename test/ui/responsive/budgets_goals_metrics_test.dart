@@ -107,7 +107,7 @@ void main() {
 
     await tester.drag(find.byType(ListView), const Offset(0, -1800));
     await tester.pumpAndSettle();
-    expect(find.text('Saúde financeira'), findsOneWidget);
+    expect(find.text('Saúde das movimentações'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
