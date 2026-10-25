@@ -14,8 +14,10 @@ void main() {
 
     await tester.pumpWidget(const MainApp());
     await tester.pumpAndSettle();
-    expect(find.byType(TextFormField), findsNWidgets(2));
     expect(find.text('Explorar demonstração'), findsOneWidget);
+    await tester.tap(find.text('Entrar com credenciais da demo'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextFormField), findsNWidgets(2));
     await tester.enterText(find.byType(TextFormField).at(0), DemoAccess.email);
     await tester.enterText(
       find.byType(TextFormField).at(1),

@@ -27,6 +27,9 @@ projeto web; o aplicativo nunca se conecta diretamente ao MongoDB.
   com legendas, valores em texto e resumo para leitor de tela. O uso dos
   orçamentos também aparece em barras de progresso. Na tela de lançamentos,
   busca e lista ficam visíveis antes do formulário de inclusão.
+- No APK sem API, o login destaca a demonstração local; as credenciais de
+  exemplo ficam em uma seção recolhível. Com API, o formulário de conta é a
+  ação principal e a demonstração permanece disponível.
 - Indicadores de consumo, aportes, orçamentos, patrimônio, histórico mensal e
   projeção simples do mês. Área administrativa com indicadores agregados.
 
@@ -92,7 +95,7 @@ O código usa Git na branch `main`. A versão do aplicativo fica em
 `pubspec.yaml`, no formato `MAJOR.MINOR.PATCH+BUILD`. O Flutter usa
 `MAJOR.MINOR.PATCH` como `versionName` do Android e `BUILD` como
 `versionCode`. A cada APK distribuído, aumente `BUILD`; não reutilize uma
-tag. A revisão com gráficos usa `0.1.0+5` / `v0.1.0-demo.5`.
+tag. A revisão do login usa `0.1.0+6` / `v0.1.0-demo.6`.
 
 Para publicar uma nova demo, faça commit do novo `version` na `main`, envie
 a branch e execute:

@@ -46,6 +46,12 @@ As capturas enviadas em 24/10/2026 mostram duas barreiras que os testes de overf
 - Em Lançamentos, busca, filtros e lista aparecem antes do formulário. “Novo lançamento” abre o formulário, que conserva os campos se for recolhido. O aviso da demo foi abreviado na tela e mantém a explicação completa para leitor de tela.
 - Testes de widget cobrem gráficos e valores, agregação de categorias, largura de 320 dp, texto a 200%, formulário recolhido e navegação. Ainda é preciso conferir a composição final e o TalkBack no aparelho do usuário.
 
+## Progresso da quarta rodada — entrada no aplicativo
+
+- No APK sem API, o botão de demonstração aparece antes dos campos e cabe inteiro na primeira tela simulada de 320 dp com texto a 200%. As credenciais de exemplo ficam em uma seção recolhível.
+- Quando existe API, e-mail, senha, aceite legal e ação de entrar continuam juntos; a demonstração permanece como opção adicional.
+- Formulários, foco no primeiro erro, teclado, temas claro/escuro e navegação para a demo são verificados por testes de widget. A aparência e a leitura com TalkBack ainda precisam de conferência em um aparelho.
+
 ## Ordem de execução
 
 As fases 1 e 2 podem avançar em paralelo. A fase 4 depende do contrato de revisão da fase 1. Uma fase só termina quando seus critérios de aceite forem demonstrados, inclusive nos estados de erro.

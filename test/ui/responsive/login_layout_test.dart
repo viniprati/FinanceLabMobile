@@ -40,6 +40,8 @@ void main() {
         MediaQuery(
           data: const MediaQueryData(
             size: Size(320, 640),
+            padding: EdgeInsets.only(top: 24, bottom: 24),
+            viewPadding: EdgeInsets.only(top: 24, bottom: 24),
             textScaler: TextScaler.linear(2),
           ),
           child: _app(baseUri: null, onDemo: () {}),
@@ -48,6 +50,18 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Explorar demonstração'), findsOneWidget);
+      expect(find.text('Explorar demonstração').hitTestable(), findsOneWidget);
+      expect(
+        tester
+            .getRect(
+              find.ancestor(
+                of: find.text('Explorar demonstração'),
+                matching: find.byType(FilledButton),
+              ),
+            )
+            .bottom,
+        lessThanOrEqualTo(616),
+      );
       expect(find.text('Entrar na demonstração'), findsNothing);
       expect(find.text('Entrar com credenciais da demo'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -69,6 +83,8 @@ void main() {
           child: _app(baseUri: null, onDemo: () {}),
         ),
       );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Entrar com credenciais da demo'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Entrar com credenciais da demo'));
       await tester.pumpAndSettle();

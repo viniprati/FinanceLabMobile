@@ -75,6 +75,7 @@ APK Android de demonstração do FinanceLab Mobile.
 - Gráficos de receitas e saídas mensais, despesas por categoria e uso dos orçamentos.
 - Busca e lista de lançamentos visíveis antes do formulário; aviso da demo mais compacto.
 - Ajustes para telas estreitas e texto ampliado, com descrições para leitor de tela.
+- Login reorganizado: acesso à demonstração no topo e credenciais de exemplo em seção recolhível.
 - Versão: $demo_version_name (build $demo_build_number)
 - Commit: $(git rev-parse HEAD)
 - SHA-256 do APK: $demo_apk_sha

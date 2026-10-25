@@ -37,6 +37,7 @@ void main() {
       expect(apiCalls, 0);
 
       await tester.ensureVisible(find.text('Explorar demonstração'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Explorar demonstração'));
       await tester.pump();
       expect(demoCalls, 2);
