@@ -9,6 +9,12 @@ abstract final class AppSpacing {
   static const xl = 32.0;
 }
 
+abstract final class AppRadius {
+  static const control = 14.0;
+  static const card = 20.0;
+  static const icon = 13.0;
+}
+
 /// Semantic colors used by financial states and chart marks.
 ///
 /// These colors intentionally remain separate from [ColorScheme]: a positive
@@ -131,13 +137,15 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: refinedScheme.surface,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.control),
+        ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.control),
           borderSide: BorderSide(color: refinedScheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.control),
           borderSide: BorderSide(color: refinedScheme.primary, width: 2),
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
@@ -149,7 +157,7 @@ abstract final class AppTheme {
             ? Colors.white
             : const Color(0xFF172420),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           side: BorderSide(
             color: refinedScheme.brightness == Brightness.light
                 ? const Color(0xFFDCE8E3)
@@ -161,9 +169,45 @@ abstract final class AppTheme {
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.control),
           ),
         ),
+      ),
+      appBarTheme: AppBarTheme(
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        centerTitle: false,
+        backgroundColor: refinedScheme.brightness == Brightness.light
+            ? const Color(0xFFF0F5F3)
+            : const Color(0xFF0D1513),
+        surfaceTintColor: refinedScheme.surfaceTint,
+        titleTextStyle:
+            (refinedScheme.brightness == Brightness.light
+                    ? typography.black
+                    : typography.white)
+                .titleLarge
+                ?.copyWith(
+                  color: refinedScheme.onSurface,
+                  fontWeight: FontWeight.w800,
+                ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        elevation: 0,
+        height: 72,
+        labelTextStyle: WidgetStatePropertyAll(
+          (refinedScheme.brightness == Brightness.light
+                  ? typography.black
+                  : typography.white)
+              .labelMedium
+              ?.copyWith(fontWeight: FontWeight.w700),
+        ),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        minWidth: 76,
+        minExtendedWidth: 220,
+        groupAlignment: -0.9,
+        labelType: NavigationRailLabelType.none,
+        useIndicator: true,
       ),
     );
   }

@@ -272,6 +272,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               },
             ),
             const SizedBox(height: AppSpacing.sm),
+            Text(
+              '${filtered.length} lançamento(s) encontrado(s)',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
             if (filtered.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(24),
@@ -378,7 +385,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   Widget _transactionCard(Transaction transaction) => Card(
     margin: const EdgeInsets.only(bottom: AppSpacing.sm),
     child: Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -400,8 +412,44 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               ),
             ],
           ),
-          Text('${transaction.category} · ${transaction.date}'),
-          ReadableValueText(value: Money.formatBr(transaction.amountCents)),
+          Text(
+            '${transaction.category} · ${transaction.date}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(switch (transaction.kind) {
+                  'income' => 'Receita',
+                  'contribution' => 'Aporte',
+                  'expense' => 'Despesa',
+                  _ => 'Lançamento',
+                }, style: Theme.of(context).textTheme.labelSmall),
+                ReadableValueText(
+                  value: Money.formatBr(transaction.amountCents),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: switch (transaction.kind) {
+                      'income' => Theme.of(
+                        context,
+                      ).extension<FinanceColors>()?.income,
+                      'contribution' => Theme.of(
+                        context,
+                      ).extension<FinanceColors>()?.contribution,
+                      _ => Theme.of(
+                        context,
+                      ).extension<FinanceColors>()?.expense,
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     ),

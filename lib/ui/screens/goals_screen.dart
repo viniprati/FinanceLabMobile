@@ -118,7 +118,7 @@ class _GoalsState extends State<GoalsScreen> {
           children: [
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Form(
                   key: _key,
                   child: Column(
@@ -126,7 +126,8 @@ class _GoalsState extends State<GoalsScreen> {
                     children: [
                       Text(
                         'Metas financeiras',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style: Theme.of(context).textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       _field(
@@ -162,7 +163,7 @@ class _GoalsState extends State<GoalsScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             _progress(
               context,
               'Orçamento mensal',
@@ -217,16 +218,31 @@ class _GoalsState extends State<GoalsScreen> {
     double value,
     String detail,
   ) => Card(
-    margin: const EdgeInsets.only(bottom: 12),
+    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
     child: Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+              Text(
+                '${(value * 100).round()}%',
+                style: Theme.of(context).textTheme.labelLarge
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
           LinearProgressIndicator(value: value),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(detail),
         ],
       ),

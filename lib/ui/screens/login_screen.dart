@@ -331,6 +331,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final offlineDemo = widget.baseUri == null && widget.onDemo != null;
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
     return Scaffold(
       body: SafeArea(
         child: LayoutBuilder(
@@ -338,7 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
             final horizontal = viewport.maxWidth < 400
                 ? AppSpacing.md
                 : AppSpacing.lg;
-            final vertical = viewport.maxHeight < 600
+            final vertical = viewport.maxHeight < 600 || keyboardInset > 0
                 ? AppSpacing.md
                 : AppSpacing.lg;
             final minimumHeight = viewport.maxHeight > vertical * 2
@@ -353,9 +355,11 @@ class _LoginScreenState extends State<LoginScreen> {
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: minimumHeight),
                 child: Align(
-                  alignment: const Alignment(0, -0.5),
+                  alignment: Alignment(0, textScale > 1.3 ? -1 : -0.35),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 480),
+                    constraints: BoxConstraints(
+                      maxWidth: viewport.maxWidth >= 760 ? 520 : 480,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [

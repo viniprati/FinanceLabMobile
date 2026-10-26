@@ -130,7 +130,7 @@ class _BudgetsState extends State<BudgetsScreen> {
         children: [
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: Form(
                 key: _key,
                 child: Column(
@@ -138,7 +138,8 @@ class _BudgetsState extends State<BudgetsScreen> {
                   children: [
                     Text(
                       _editing == null ? 'Novo orçamento' : 'Editar orçamento',
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: Theme.of(context).textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
@@ -167,7 +168,7 @@ class _BudgetsState extends State<BudgetsScreen> {
                           ? 'Informe um valor maior que zero'
                           : null,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                     FilledButton(
                       onPressed: _save,
                       child: Text(_editing == null ? 'Adicionar' : 'Salvar'),
@@ -177,11 +178,11 @@ class _BudgetsState extends State<BudgetsScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           if (widget.data.budgets.isEmpty)
             const Card(
               child: Padding(
-                padding: EdgeInsets.all(20),
+                padding: EdgeInsets.all(AppSpacing.lg),
                 child: Text('Nenhum orçamento cadastrado ainda.'),
               ),
             ),
@@ -199,7 +200,7 @@ class _BudgetsState extends State<BudgetsScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -226,7 +227,8 @@ class _BudgetsState extends State<BudgetsScreen> {
                     children: [
                       Text(
                         b.category,
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       actions,
                     ],
@@ -245,12 +247,15 @@ class _BudgetsState extends State<BudgetsScreen> {
                 );
               },
             ),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               '${Money.formatBr(spent)} usados de ${Money.formatBr(b.monthlyLimitCents)}',
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             LinearProgressIndicator(value: ratio),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               remaining >= 0
                   ? '${Money.formatBr(remaining)} restantes'

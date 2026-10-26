@@ -164,9 +164,16 @@ class _FundsState extends State<FundsScreen> {
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
+          Text(
+            '${widget.data.funds.length} fundo(s) monitorado(s)',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: Form(
                 key: _key,
                 child: Column(
@@ -318,7 +325,12 @@ class _FundsState extends State<FundsScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 8, 8),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.sm,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -336,13 +348,30 @@ class _FundsState extends State<FundsScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(f.account.isEmpty ? f.category : f.account),
+            Text(
+              f.account.isEmpty ? f.category : f.account,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
             const SizedBox(height: AppSpacing.xs),
             const Text('Valor atual'),
-            ReadableValueText(value: Money.formatBr(f.currentCents)),
+            ReadableValueText(
+              value: Money.formatBr(f.currentCents),
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: AppSpacing.xs),
             const Text('Resultado'),
-            ReadableValueText(value: Money.formatBr(result)),
+            ReadableValueText(
+              value: Money.formatBr(result),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: result >= 0
+                    ? Theme.of(context).extension<FinanceColors>()?.income
+                    : Theme.of(context).extension<FinanceColors>()?.expense,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             OverflowBar(
               alignment: MainAxisAlignment.end,
               spacing: 4,

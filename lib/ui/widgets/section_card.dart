@@ -18,55 +18,62 @@ class SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final header = Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w800),
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: AppSpacing.xs / 2),
-                      Text(
-                        subtitle!,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ],
-                );
-                if (action == null) return header;
-                if (constraints.maxWidth < 420) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      header,
-                      const SizedBox(height: AppSpacing.xs),
-                      action!,
-                    ],
-                  );
-                }
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: header),
-                    const SizedBox(width: AppSpacing.sm),
-                    action!,
-                  ],
-                );
-              },
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final padding = constraints.maxWidth < 360
+              ? AppSpacing.md
+              : AppSpacing.lg;
+          return Padding(
+            padding: EdgeInsets.all(padding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final header = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        if (subtitle != null) ...[
+                          const SizedBox(height: AppSpacing.xs / 2),
+                          Text(
+                            subtitle!,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ],
+                    );
+                    if (action == null) return header;
+                    if (constraints.maxWidth < 420) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          header,
+                          const SizedBox(height: AppSpacing.xs),
+                          action!,
+                        ],
+                      );
+                    }
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: header),
+                        const SizedBox(width: AppSpacing.sm),
+                        action!,
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                child,
+              ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            child,
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -110,7 +117,9 @@ class MetricCard extends StatelessWidget {
                             height: 42,
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: .12),
-                              borderRadius: BorderRadius.circular(13),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.icon,
+                              ),
                             ),
                             child: Icon(icon, color: color),
                           ),
@@ -131,7 +140,9 @@ class MetricCard extends StatelessWidget {
                             height: 42,
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: .12),
-                              borderRadius: BorderRadius.circular(13),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.icon,
+                              ),
                             ),
                             child: Icon(icon, color: color),
                           ),
@@ -220,12 +231,12 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(
     child: Padding(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 44, color: Theme.of(context).colorScheme.outline),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.sm),
           Text(message, textAlign: TextAlign.center),
         ],
       ),

@@ -146,11 +146,19 @@ class _HomeShellState extends State<HomeShell> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(isAdmin ? 'Administração' : active.title),
+            Text(
+              isAdmin ? 'Administração' : active.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             if (!isAdmin && active != AppSection.more)
               Text(
                 monthLabel(controller.selectedMonth),
-                style: Theme.of(context).textTheme.labelSmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
           ],
         ),
@@ -215,7 +223,7 @@ class _HomeShellState extends State<HomeShell> {
               if (statusItems.isNotEmpty)
                 ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxHeight: constraints.maxHeight * 0.48,
+                    maxHeight: constraints.maxHeight * 0.34,
                   ),
                   child: SingleChildScrollView(
                     child: Column(children: statusItems),
@@ -227,6 +235,9 @@ class _HomeShellState extends State<HomeShell> {
                         children: [
                           NavigationRail(
                             extended: width >= 1200,
+                            labelType: width >= 1200
+                                ? NavigationRailLabelType.none
+                                : NavigationRailLabelType.all,
                             scrollable: true,
                             selectedIndex: AppSection.values.indexOf(active),
                             onDestinationSelected: (index) => setState(
@@ -476,60 +487,136 @@ class _MorePage extends StatelessWidget {
   final Future<void> Function() onDataPrivacy;
 
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      Text(
-        controller.user?.name ?? '',
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
-      Text(
-        controller.user?.email ?? '',
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      const SizedBox(height: 18),
-      for (final value in const [
-        AppSection.metrics,
-        AppSection.budgets,
-        AppSection.funds,
-        AppSection.goals,
-      ])
-        Card(
-          child: ListTile(
-            leading: Icon(value.icon),
-            title: Text(value.title),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => onSelect(value),
-          ),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    const destinations = [
+      AppSection.metrics,
+      AppSection.budgets,
+      AppSection.funds,
+      AppSection.goals,
+    ];
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          children: [
+            Card(
+              color: scheme.primaryContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: scheme.primary,
+                      foregroundColor: scheme.onPrimary,
+                      child: const Icon(Icons.person_outline),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            controller.user?.name ?? 'Sua conta',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: scheme.onPrimaryContainer,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (controller.user?.email case final email?)
+                            Text(
+                              email,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onPrimaryContainer,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              'Explorar',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Card(
+              child: Column(
+                children: [
+                  for (var index = 0; index < destinations.length; index++) ...[
+                    if (index > 0) const Divider(height: 1, indent: 56),
+                    ListTile(
+                      leading: Icon(
+                        destinations[index].icon,
+                        color: scheme.primary,
+                      ),
+                      title: Text(destinations[index].title),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => onSelect(destinations[index]),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              'Conta e privacidade',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.manage_accounts_outlined),
+                    title: const Text('Meus dados e privacidade'),
+                    subtitle: const Text(
+                      'Exportar, importar ou solicitar eliminação',
+                    ),
+                    onTap: () => unawaited(onDataPrivacy()),
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  ListTile(
+                    leading: const Icon(Icons.description_outlined),
+                    title: const Text('Termos de Uso'),
+                    onTap: apiUri == null
+                        ? null
+                        : () => unawaited(onOpenLegal('/termos-de-uso')),
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  ListTile(
+                    leading: const Icon(Icons.privacy_tip_outlined),
+                    title: const Text('Política de Privacidade'),
+                    onTap: apiUri == null
+                        ? null
+                        : () => unawaited(
+                            onOpenLegal('/politica-de-privacidade'),
+                          ),
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  ListTile(
+                    leading: const Icon(Icons.logout),
+                    title: const Text('Sair'),
+                    onTap: () => unawaited(onLogout()),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      const SizedBox(height: 12),
-      ListTile(
-        leading: const Icon(Icons.description_outlined),
-        title: const Text('Termos de Uso'),
-        onTap: apiUri == null
-            ? null
-            : () => unawaited(onOpenLegal('/termos-de-uso')),
       ),
-      ListTile(
-        leading: const Icon(Icons.privacy_tip_outlined),
-        title: const Text('Política de Privacidade'),
-        onTap: apiUri == null
-            ? null
-            : () => unawaited(onOpenLegal('/politica-de-privacidade')),
-      ),
-      ListTile(
-        leading: const Icon(Icons.manage_accounts_outlined),
-        title: const Text('Meus dados e privacidade'),
-        subtitle: const Text('Exportar, importar ou solicitar eliminação'),
-        onTap: () => unawaited(onDataPrivacy()),
-      ),
-      ListTile(
-        leading: const Icon(Icons.logout),
-        title: const Text('Sair'),
-        onTap: () => unawaited(onLogout()),
-      ),
-    ],
-  );
+    );
+  }
 }
 
 class _AdminOverview extends StatelessWidget {
@@ -580,118 +667,165 @@ class _AdminOverview extends StatelessWidget {
       'requests7d': 'Requisições em 7 dias',
       'writes7d': 'Gravações em 7 dias',
     };
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          'Indicadores agregados',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 12),
-        for (final entry in labels.entries)
-          Card(
-            child: ListTile(
-              title: Text(entry.value),
-              trailing: Text('${values[entry.key] ?? '—'}'),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1040),
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          children: [
+            Text(
+              'Indicadores agregados',
+              style: Theme.of(context).textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
-          ),
-        if (plans.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text(
-            'Clientes por plano',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          Card(
-            child: Column(
-              children: [
-                for (final plan in plans)
-                  ListTile(
-                    title: Text('${plan['plan'] ?? 'Sem plano'}'),
-                    trailing: Text('${plan['count'] ?? 0}'),
-                  ),
-              ],
+            const SizedBox(height: AppSpacing.md),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final scaled = MediaQuery.textScalerOf(context).scale(16) > 20;
+                final columns = scaled || constraints.maxWidth < 600
+                    ? 1
+                    : constraints.maxWidth < 900
+                    ? 2
+                    : 3;
+                final cardWidth =
+                    (constraints.maxWidth - (columns - 1) * AppSpacing.sm) /
+                    columns;
+                return Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    for (final entry in labels.entries)
+                      SizedBox(
+                        width: cardWidth,
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  entry.value,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                                const SizedBox(height: AppSpacing.xs),
+                                Text(
+                                  '${values[entry.key] ?? '—'}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(fontWeight: FontWeight.w800),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
-          ),
-        ],
-        if (daily.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text(
-            'Atividade recente',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          Card(
-            child: Column(
-              children: [
-                for (final item in daily)
-                  ListTile(
-                    title: Text('${item['day'] ?? '—'}'),
-                    subtitle: Text(
-                      '${item['writes'] ?? 0} salvamento(s) · ${item['errors'] ?? 0} erro(s)',
+            if (plans.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Clientes por plano',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              Card(
+                child: Column(
+                  children: [
+                    for (final plan in plans)
+                      ListTile(
+                        title: Text('${plan['plan'] ?? 'Sem plano'}'),
+                        trailing: Text('${plan['count'] ?? 0}'),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+            if (daily.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Atividade recente',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              Card(
+                child: Column(
+                  children: [
+                    for (final item in daily)
+                      ListTile(
+                        title: Text('${item['day'] ?? '—'}'),
+                        subtitle: Text(
+                          '${item['writes'] ?? 0} salvamento(s) · ${item['errors'] ?? 0} erro(s)',
+                        ),
+                        trailing: Text('${item['requests'] ?? 0} acessos'),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+            if (routes.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Uso por área',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              Card(
+                child: Column(
+                  children: [
+                    for (final route in routes)
+                      ListTile(
+                        title: Text(_adminRouteLabel('${route['name'] ?? ''}')),
+                        trailing: Text('${route['count'] ?? 0}'),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+            if (scopes.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Isolamento de dados',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: const Text('Camadas ativas monitoradas'),
+                      trailing: Text('${scopes.length}'),
                     ),
-                    trailing: Text('${item['requests'] ?? 0} acessos'),
-                  ),
-              ],
+                    ListTile(
+                      title: const Text('Lançamentos nas camadas'),
+                      trailing: Text('$scopeTransactions'),
+                    ),
+                    ListTile(
+                      title: const Text('Fundos nas camadas'),
+                      trailing: Text('$scopeFunds'),
+                    ),
+                    ListTile(
+                      title: const Text('Orçamentos nas camadas'),
+                      trailing: Text('$scopeBudgets'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: controller.busy
+                  ? null
+                  : () => unawaited(controller.refresh()),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Atualizar'),
             ),
-          ),
-        ],
-        if (routes.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text('Uso por área', style: Theme.of(context).textTheme.titleMedium),
-          Card(
-            child: Column(
-              children: [
-                for (final route in routes)
-                  ListTile(
-                    title: Text(_adminRouteLabel('${route['name'] ?? ''}')),
-                    trailing: Text('${route['count'] ?? 0}'),
-                  ),
-              ],
+            OutlinedButton.icon(
+              onPressed: () => unawaited(controller.logout()),
+              icon: const Icon(Icons.logout),
+              label: const Text('Sair'),
             ),
-          ),
-        ],
-        if (scopes.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text(
-            'Isolamento de dados',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          Card(
-            child: Column(
-              children: [
-                ListTile(
-                  title: const Text('Camadas ativas monitoradas'),
-                  trailing: Text('${scopes.length}'),
-                ),
-                ListTile(
-                  title: const Text('Lançamentos nas camadas'),
-                  trailing: Text('$scopeTransactions'),
-                ),
-                ListTile(
-                  title: const Text('Fundos nas camadas'),
-                  trailing: Text('$scopeFunds'),
-                ),
-                ListTile(
-                  title: const Text('Orçamentos nas camadas'),
-                  trailing: Text('$scopeBudgets'),
-                ),
-              ],
-            ),
-          ),
-        ],
-        const SizedBox(height: 16),
-        FilledButton.icon(
-          onPressed: controller.busy
-              ? null
-              : () => unawaited(controller.refresh()),
-          icon: const Icon(Icons.refresh),
-          label: const Text('Atualizar'),
+          ],
         ),
-        OutlinedButton.icon(
-          onPressed: () => unawaited(controller.logout()),
-          icon: const Icon(Icons.logout),
-          label: const Text('Sair'),
-        ),
-      ],
+      ),
     );
   }
 }
